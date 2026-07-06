@@ -1,0 +1,39 @@
+[project]
+name = "redcell"
+version = "0.0.0"
+description = "Autonomous multi-agent red-team for LLM agents and MCP servers"
+requires-python = ">=3.12"
+dependencies = [
+    "redcell-core",
+    "redcell-verifiers",
+    "redcell-target",
+    "redcell-attackers",
+    "redcell-eval",
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+redcell-core = { workspace = true }
+redcell-verifiers = { workspace = true }
+redcell-target = { workspace = true }
+redcell-attackers = { workspace = true }
+redcell-eval = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff", "pyright"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "packages/redcell-core/src",
+    "packages/redcell-verifiers/src",
+    "packages/redcell-target/src",
+    "packages/redcell-attackers/src",
+    "packages/redcell-eval/src",
+    "scripts",
+]

@@ -1,0 +1,26 @@
+# Local infra for RedCell. `docker compose up -d`
+# Langfuse is intentionally left to its own cloud free tier (or its official
+# self-host compose) — v3 needs Clickhouse + Redis and would bloat this file.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: redcell
+      POSTGRES_PASSWORD: redcell
+      POSTGRES_DB: redcell
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redcell"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:                       # local SLM mutator for offline dev (Qwen3/Gemma3)
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: ["ollama:/root/.ollama"]
+
+volumes:
+  pgdata:
+  ollama:

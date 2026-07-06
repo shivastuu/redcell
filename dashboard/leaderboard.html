@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RedCell — Leaderboard</title><style>
+:root{--ink:#f3f5f8;--panel:#fff;--line:#dbe1e9;--text:#111823;--muted:#566274;
+--red:#d23a41;--teal:#0a8f79;--amber:#8f6410;--rf:rgba(210,58,65,.1);--tf:rgba(10,143,121,.1)}
+@media(prefers-color-scheme:dark){:root{--ink:#0b0f16;--panel:#131a24;--line:#28323f;--text:#e7edf4;
+--muted:#93a1b3;--red:#f0555b;--teal:#22a88f;--amber:#e0a83a;--rf:rgba(240,85,91,.14);--tf:rgba(34,168,143,.14)}}
+*{box-sizing:border-box}body{margin:0;background:var(--ink);color:var(--text);
+font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:32px 22px 64px}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+h1{font-family:ui-monospace,Menlo,monospace;font-size:30px;margin:0;letter-spacing:-.01em}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);
+box-shadow:0 0 0 4px var(--rf);margin-right:9px;vertical-align:middle}
+.sub{color:var(--muted);margin:6px 0 0}
+.tags{margin-top:10px;font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
+.hero{display:flex;gap:14px;flex-wrap:wrap;margin:26px 0}
+.kpi{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.kpi .v{font-family:ui-monospace,monospace;font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .k{font-family:ui-monospace,monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.kpi .ci{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted);margin-top:6px}
+.v.red{color:var(--red)}.v.teal{color:var(--teal)}.v.amber{color:var(--amber)}
+h2{font-size:15px;font-family:ui-monospace,monospace;letter-spacing:.04em;text-transform:uppercase;
+color:var(--muted);margin:34px 0 12px}
+table{width:100%;border-collapse:collapse}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
+.cat{font-family:ui-monospace,monospace;font-weight:600}
+.track{width:46%}.bar{height:11px;border-radius:6px;display:inline-block;vertical-align:middle}
+.bar.red{background:var(--red);margin-right:3px}.bar.teal{background:var(--teal)}
+.tnum{font-family:ui-monospace,monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tnum.r{color:var(--red)}.tnum.t{color:var(--teal)}
+.legend{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);margin-bottom:8px}
+.legend b.r{color:var(--red)}.legend b.t{color:var(--teal)}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);
+border-radius:0 12px 12px 0;padding:14px 16px;margin-top:28px;font-size:14px;color:var(--muted)}
+.foot{margin-top:24px;color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}
+</style></head><body><div class="wrap">
+<h1><span class="dot"></span>RedCell — Attack Leaderboard</h1>
+<p class="sub">Adversarial robustness of a fintech agent, before vs after the layered defense.</p>
+<p class="tags mono">target: sim &nbsp;·&nbsp; corpus: v1.0.0+99e2909cb788 &nbsp;·&nbsp; n=42 goals &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+
+<div class="hero">
+  <div class="kpi"><div class="v red">59.5%</div><div class="k">baseline · undefended</div>
+    <div class="ci">95% CI [44.5%, 73.0%]</div></div>
+  <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
+    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
+  <div class="kpi"><div class="v amber">31.0%</div><div class="k">defended · ADAPTIVE</div>
+    <div class="ci">the honest number · 95% CI [19.1%, 46.0%]</div></div>
+</div>
+
+<h2>Per-OWASP category</h2>
+<div class="legend mono"><b class="r">■</b> baseline &nbsp; <b class="t">■</b> defended</div>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">66.7%</td><td class="track"><div class="bar red" style="width:66.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">83.3%</td><td class="track"><div class="bar red" style="width:83.3%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">66.7%</td><td class="track"><div class="bar red" style="width:66.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">41.7%</td><td class="track"><div class="bar red" style="width:41.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">50.0%</td><td class="track"><div class="bar red" style="width:50.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+
+<h2>Per-layer attribution (add-one-in)</h2>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:59.5%"></div></td><td class="tnum t">kills 59.5%</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:16.7%"></div></td><td class="tnum t">kills 16.7%</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:11.9%"></div></td><td class="tnum t">kills 11.9%</td></tr><tr><td>L4 PII/canary redact</td><td class="track"><div class="bar teal" style="width:38.1%"></div></td><td class="tnum t">kills 38.1%</td></tr><tr><td>L5 schema validation</td><td class="track"><div class="bar teal" style="width:9.5%"></div></td><td class="tnum t">kills 9.5%</td></tr></table>
+
+<h2>Cost — heterogeneous routing</h2>
+<p class="mono" style="color:var(--muted)">all-frontier $4.23 &nbsp;→&nbsp; routed $1.56 &nbsp;·&nbsp;
+mutation cost cut ~63% &nbsp;·&nbsp; 91 attacks/$</p>
+
+<div class="note"><b>Read the adaptive number.</b> The frozen replay is the headline; the adaptive result is the truth.
+Structural controls (spotlight, tool allowlist, schema validation) hold under adaptive pressure; probabilistic
+content filters (input classifier, PII redaction) fall to encoding+obfuscation — which is why you report both.</div>
+<p class="foot">Generated from dashboard/scorecard.json · every verdict is a deterministic function of a server-recorded trace.</p>
+</div></body></html>

@@ -1,0 +1,35 @@
+# The single source of truth for what RedCell may attack.
+# Content-hashed; the hash is stamped into every trace and re-verified in CI.
+# Class-C entries require a GPG-signed human commit + a permission evidence bundle.
+schema_version: 1
+scope_id: "redcell-scope-2026-07"
+
+targets:
+  - id: "own-fintech-agent"          # Class A — the target you build
+    class: A
+    endpoint: "http://localhost:8710/mcp"   # loopback only
+    server_version: "git:redcell@HEAD"
+    attack_profile: full
+
+  # --- examples (commented until you actually add them) ---
+  # - id: "acme-statements-mcp"       # Class B — registry package, self-hosted
+  #   class: B
+  #   registry_name: "io.github.acme/statements-mcp"
+  #   package: "npm:@acme/statements-mcp@2.4.1"
+  #   package_sha256: "<pinned, verified on pull>"
+  #   endpoint: "http://sandbox-net:8711/mcp"   # inside egress-locked network
+  #   attack_profile: full
+
+  # - id: "vendorx-hosted"            # Class C — remote, requires signed permission
+  #   class: C
+  #   endpoint: "https://mcp.vendorx.example/mcp"
+  #   attack_profile: readonly_ratelimited
+  #   permission:
+  #     type: bug_bounty
+  #     program_url: "https://hackerone.com/vendorx"
+  #     in_scope_asset: "mcp.vendorx.example"
+  #     safe_harbor: true
+  #     evidence_bundle: "permissions/vendorx-2026-07-01.sha256"
+  #     approved_by: "you@example.com"
+  #     approved_commit: "signed:GPGKEYID"
+  #     expires: "2026-10-01"

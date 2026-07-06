@@ -1,0 +1,23 @@
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# env / secrets
+.env
+permissions/*.pdf
+permissions/*.json
+
+# data (fetched, never committed)
+data/ieee_cis/
+data/seeds/
+
+# node (dashboard)
+node_modules/
+.next/
+
+# os
+.DS_Store

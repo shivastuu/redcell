@@ -1,0 +1,27 @@
+name: redteam-gate
+# The guardrail-regression gate: replay the FROZEN corpus against the defended
+# agent and FAIL the build if attack-success regresses. A security regression
+# fails the build like any other test. Runs on the deterministic simulator, so
+# it needs no API keys and is non-flaky (temperature-0 equivalent by construction).
+on:
+  pull_request:
+    paths:
+      - "packages/redcell-target/**"
+      - "packages/redcell-verifiers/**"
+      - "**/system_prompt*.txt"
+      - "guardrails.lock.json"
+  schedule:
+    - cron: "0 3 * * *"      # nightly
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: guardrail-regression gate (fails on ASR regression)
+        run: python3 scripts/run_gate.py
+      # To refresh the accepted baseline after an intentional change:
+      #   python3 scripts/run_gate.py --update  &&  commit guardrails.lock.json

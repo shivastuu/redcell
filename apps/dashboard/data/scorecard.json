@@ -1,0 +1,92 @@
+{
+  "target": "sim",
+  "corpus_version": "v1.0.0+99e2909cb788",
+  "asr": {
+    "baseline": {
+      "asr": 0.5952380952380952,
+      "lo": 0.44494045528177417,
+      "hi": 0.7295735232879093,
+      "k": 25,
+      "n": 42
+    },
+    "defended_frozen": {
+      "asr": 0.0,
+      "lo": 0.0,
+      "hi": 0.08380161250916197,
+      "k": 0,
+      "n": 42
+    },
+    "defended_adaptive": {
+      "asr": 0.30952380952380953,
+      "lo": 0.1907092651972273,
+      "hi": 0.46026277766340595,
+      "k": 13,
+      "n": 42
+    }
+  },
+  "owasp": [
+    {
+      "category": "LLM01",
+      "baseline": 0.6666666666666666,
+      "defended": 0.0,
+      "n": 12
+    },
+    {
+      "category": "LLM02",
+      "baseline": 0.8333333333333334,
+      "defended": 0.0,
+      "n": 6
+    },
+    {
+      "category": "LLM05",
+      "baseline": 0.6666666666666666,
+      "defended": 0.0,
+      "n": 6
+    },
+    {
+      "category": "LLM06",
+      "baseline": 0.4166666666666667,
+      "defended": 0.0,
+      "n": 12
+    },
+    {
+      "category": "LLM07",
+      "baseline": 0.5,
+      "defended": 0.0,
+      "n": 6
+    }
+  ],
+  "layers": [
+    {
+      "name": "L1 input classifier",
+      "asr": 0.0,
+      "kills": 0.5952380952380952
+    },
+    {
+      "name": "L2 spotlighting",
+      "asr": 0.42857142857142855,
+      "kills": 0.16666666666666669
+    },
+    {
+      "name": "L3 tool allowlist",
+      "asr": 0.47619047619047616,
+      "kills": 0.11904761904761907
+    },
+    {
+      "name": "L4 PII/canary redact",
+      "asr": 0.21428571428571427,
+      "kills": 0.38095238095238093
+    },
+    {
+      "name": "L5 schema validation",
+      "asr": 0.5,
+      "kills": 0.09523809523809523
+    }
+  ],
+  "cost": {
+    "all_frontier_usd": 4.23,
+    "routed_usd": 1.56,
+    "mutation_cost_cut_pct": 63,
+    "attacks_per_usd": 91
+  }
+}
