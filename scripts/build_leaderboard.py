@@ -30,9 +30,9 @@ def build(data):
         f'<td class="tnum t">{pct(o["defended"])}</td></tr>'
         for o in data["owasp"])
     layer_rows = "".join(
-        f'<tr><td>{l["name"]}</td><td class="track">{bar(l["kills"],"teal")}</td>'
-        f'<td class="tnum t">kills {pct(l["kills"])}</td></tr>'
-        for l in data["layers"])
+        f'<tr><td>{layer["name"]}</td><td class="track">{bar(layer["kills"],"teal")}</td>'
+        f'<td class="tnum t">kills {pct(layer["kills"])}</td></tr>'
+        for layer in data["layers"])
     c = data["cost"]
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

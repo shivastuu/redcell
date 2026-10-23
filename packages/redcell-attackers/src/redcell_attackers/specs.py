@@ -6,7 +6,7 @@ goal + the mutation operators applied so far (what the RLVR loop evolves).
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from redcell_core.schemas import Canary
 

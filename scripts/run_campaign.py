@@ -48,7 +48,7 @@ def main() -> None:
     print("=" * 66)
 
     baseline = campaign.discover(h, goals, budget)
-    version = freeze(baseline, ROOT)
+    freeze(baseline, ROOT)
     full = DefenseConfig.full()
     defended = campaign.replay_corpus(baseline, h, full)
     adaptive = campaign.adaptive(baseline, h, full, budget)
@@ -83,7 +83,7 @@ def main() -> None:
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "scorecard.json"), "w") as f:
         json.dump(report, f, indent=2)
-    print(f"\nwrote dashboard/scorecard.json  ->  `python3 scripts/build_leaderboard.py`")
+    print("\nwrote dashboard/scorecard.json  ->  `python3 scripts/build_leaderboard.py`")
     print("=" * 66)
     print("Frozen number = headline; ADAPTIVE number = truth. Structural controls")
     print("(L2/L3/L5) hold under adaptation; content filters (L1/L4) fall to")
