@@ -212,7 +212,8 @@ border-radius:0 12px 12px 0;padding:14px 16px;margin-top:22px;font-size:14px;col
 <div class="scroll">{summary(cards)}</div>
 <div class="note"><b>How to read this.</b> <i>Frozen</i> replays the attacks that worked, unchanged, against the
 defended agent. <i>Adaptive</i> lets the mutation loop search again against it. Report both: frozen alone
-overstates how safe the agent is. Small n means wide confidence intervals.</div>
+overstates how safe the agent is. Here "adaptive" means retrying four fixed mutations against the defenses; it is
+not an attacker model that rewrites its attacks, which is the stronger test. Small n means wide confidence intervals.</div>
 {sections}
 <p class="foot">Generated from dashboard/scorecards/*.json · every verdict is a deterministic function of a server-recorded trace.</p>
 </div></body></html>"""

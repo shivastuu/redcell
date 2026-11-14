@@ -35,7 +35,7 @@ LAYERS = [
     ("L1 input classifier", DefenseConfig(l1_input_classifier=True)),
     ("L2 spotlighting",      DefenseConfig(l2_spotlight=True)),
     ("L3 tool allowlist",    DefenseConfig(l3_allowlist=True)),
-    ("L4 PII/canary redact", DefenseConfig(l4_redact=True)),
+    ("L4 withhold + Presidio", DefenseConfig(l4_redact=True)),
     ("L5 render-safe output", DefenseConfig(l5_output=True)),
 ]
 

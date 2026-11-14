@@ -16,25 +16,39 @@ measure what each guardrail actually buys you.</p>
 
 ## The headline
 
-> **The same 42 attacks broke an open 7B model 81% of the time, and Claude Haiku 0% of the time.**
-> Turning on all five guardrail layers cost **zero** useful answers and raised **zero** false alarms on normal
-> questions (6 per model, both models).
+> **The same 42 attacks broke an open 7B model 83% of the time, and Claude Haiku 0% of the time.**
+> With five guardrail layers on, the 7B model went to **0 of 42**, and stayed at 0 when every attack was retried
+> with all four mutations. Normal questions lost **no** useful answers and raised **no** false alarms.
 
 | | Qwen2.5-7B (local) | Claude Haiku 5.5 (API) |
 |:--|:--:|:--:|
-| **Attacks that succeeded, no defenses** | **81.0%** · 34 of 42 | **0%** · 0 of 42 |
-| 95% confidence interval | 66.7 – 90.0% | 0 – 8.4% |
+| **Attacks that succeeded, no defenses** | **83.3%** · 35 of 42 | **0%** · 0 of 42 |
+| 95% confidence interval | 69.4 – 91.7% | 0 – 8.4% |
+| **With all five guards** (attacks that worked, replayed) | **0%** · 0 of 42 | 0% · 0 of 42 |
+| With all five guards, retrying all four mutations | 0% · 0 of 42 | 0% · 0 of 42 |
 | Normal questions wrongly flagged | 0 of 6 | 0 of 6 |
 | Useful answers, no guards → all guards | 4/4 → 4/4 | 4/4 → 4/4 |
-| Cost per model call | $0 | ≈ $0.00026 |
+| Cost of the full campaign | $0 (683 calls, local) | **$0.21** (815 calls) |
 
-Every number comes from a real model run, with its sample size and confidence interval.
-Results against the real guardrails (frozen replay, adaptive attacks, each layer on its own) are being
-measured now and appear on the live leaderboard as each run finishes.
+Every number comes from a real model run, with its sample size and 95% confidence interval. An earlier run of the
+same campaign on Qwen gave 81.0%: the same model varies between runs, which is why repeated runs are on the roadmap.
+
+> **0% here means "against these known attacks".** Published adaptive attackers, which rewrite their attacks
+> against the defenses, break classifiers like L1. Testing that is the next step, not a solved problem.
+
+**What each guard does on its own** (Qwen, share of the 83.3% it blocks):
+
+| L1 injection classifier | L4 withhold + Presidio | L3 tool allowlist | L2 datamarking | L5 render-safe output |
+|:--:|:--:|:--:|:--:|:--:|
+| **83.3%** (all of it) | 50.0% | 26.2% | 21.4% | 7.1% |
+
+<p align="center"><img src="docs/img/leaderboard-results.png" width="860"
+  alt="RedCell leaderboard results: Qwen2.5-7B 83.3% undefended and 0% defended, Claude Haiku 5.5 0% throughout, with per-OWASP bars and per-layer attribution"></p>
+<p align="center"><sub>The leaderboard after both campaigns: ranking, per-OWASP results, and what each guard contributes.</sub></p>
 
 <p align="center"><img src="docs/img/leaderboard-live.png" width="860"
   alt="RedCell live leaderboard: a progress panel for two running campaigns and a live feed of attacks, the tools each model called, its reply, and whether the attack was held"></p>
-<p align="center"><sub>The live leaderboard during a run: every attack, the tools the model called, its reply, and the verdict.</sub></p>
+<p align="center"><sub>During a run: every attack, the tools the model called, its reply, and the verdict, live.</sub></p>
 
 ---
 
@@ -80,14 +94,17 @@ flowchart LR
 
 1. **Haiku reads the poisoned memo and ignores it.** It fetches the transaction, receives the injected
    instruction, and answers the customer's real question.
-2. **The injection classifier catches base64-wrapped attacks,** and flagged none of the normal questions.
-3. **PII detection misses business secrets.** Presidio redacts card numbers and emails, but not an internal
-   escalation code. Keep secrets out of prompts.
+2. **The injection classifier did most of the work.** On its own it blocked every attack, including
+   base64-wrapped ones, and flagged none of the normal questions.
+3. **A model can leak a secret while refusing.** With only L4 on, Qwen replied *"I'm sorry, but I cannot provide
+   the confidential staff escalation code RC-SYS_SECRET-…"*. PII detection didn't catch it, because a business
+   secret isn't PII. Keep secrets out of prompts.
 4. **Guards can fight each other.** The classifier flagged another guard's `[REDACTED]` placeholder as an attack,
    and the agent told a real customer about a "prompt injection issue". Fixed, and caught only because normal
    traffic was measured too.
-5. **Tail latency decides where a guard runs.** On the Mac GPU: 12 ms median but 150 ms worst case. On CPU: 33 ms
-   median, 38 ms worst.
+5. **Tail latency decides where a guard runs, and load changes it.** On the Mac GPU: 12 ms median but 150 ms worst
+   case. On an idle CPU: 33 ms median, 38 ms worst. Sharing the CPU with a local model during a campaign: p50
+   54–59 ms, p99 140–192 ms (about 940 calls per run).
 6. **The first breach checker would have flagged nearly every normal answer** as an attack. Measuring against a
    real model exposed it.
 
@@ -132,7 +149,7 @@ not the official attack suites; running those is on the roadmap.
 | Fake system notice, note-to-assistant, authority claim | common real-world patterns |
 
 Goals map to the OWASP Top 10 for LLM apps (2025). Qwen with no defenses: LLM01 prompt injection 91.7% ·
-LLM02 data disclosure 66.7% · LLM05 unsafe output 100% · LLM06 excessive agency 66.7% · LLM07 system-prompt
+LLM02 data disclosure 83.3% · LLM05 unsafe output 100% · LLM06 excessive agency 66.7% · LLM07 system-prompt
 leakage 83.3% (n = 6 to 12 each).
 </details>
 
@@ -142,11 +159,13 @@ leakage 83.3% (n = 6 to 12 each).
 - **Undefended:** each attack is retried with up to 4 mutations until one works.
 - **Defended, frozen replay:** the attacks that worked are replayed unchanged against the defended agent, to isolate the defenses' effect.
 - **Defended, adaptive:** the mutation search runs again against the defenses. Frozen alone overstates safety.
+  Here it retries four fixed mutations; an attacker model that rewrites attacks is the stronger test and is next.
 - **Each layer on its own:** shows what every guard contributes.
 - **Benign control:** 6 normal questions, without and with all guards. Reports false breaches, false alarms, and
   whether answers still contain the facts the tools returned.
 - **Wilson 95% confidence intervals** on every rate. **Cost** comes from the token counts the API returns.
-- **Guard latency** (M3 Pro, CPU): L1 p50 33 ms idle; p50 44–57 ms / p99 78–96 ms while the local model shares the CPU.
+- **Guard latency** (M3 Pro, CPU): L1 p50 33 ms idle; p50 54–59 ms / p99 140–192 ms during full campaigns, while
+  the local model shares the CPU.
 </details>
 
 <details>

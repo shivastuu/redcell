@@ -165,15 +165,34 @@ flowchart LR
 - **No.** It called `get_transaction`, received the poisoned memo, and ignored it. These are known
   2023–24 attack styles and Haiku is safety-trained. The real test is adaptive attacks (Phase 3).
 
+### 28. Qwen with all guards scored 0%. Is the agent secure now?
+- **No.** It is 0 of 42 against *these known attacks* and their four fixed mutations (95% CI up to 8.4%).
+  Our "adaptive" phase only retries those mutations. Published adaptive attackers rewrite their attacks against
+  the defense and break classifiers like L1. That is the next test.
+- **If they push** ("then why report it?"): it shows the guards stop the whole known catalogue without costing a
+  single useful answer. It is a floor, not a ceiling, and saying so is the point.
+
+### 29. How can a model leak a secret while refusing?
+- **Found:** with only L4 on, Qwen wrote *"I'm sorry, but I cannot provide the confidential staff escalation code
+  RC-SYS_SECRET-…"*. It refused and quoted the secret in the same sentence.
+- **Why it matters:** "the model refused" is not "nothing leaked". That is why the verdict comes from the output,
+  not from the model's intent, and why secrets should never sit in a prompt at all.
+
+### 30. Why did the same campaign give 81.0% once and 83.3% the next time?
+- **Why:** the model samples its words, so the same attack can land one time and not the next. One run is one sample.
+- **What to do:** repeat runs and report the spread. Both numbers sit well inside each other's confidence interval.
+
 ---
 
 ## Numbers to remember
 
 | | Qwen2.5-7B (local) | Claude Haiku 5.5 |
 |---|---|---|
-| Undefended attack success (42 attacks) | 81.0% (95% CI 66.7–90.0%) | 0/7 so far (full run in progress) |
-| Benign: false breaches | 0/6 | 0/6 |
-| Benign: L1 false alarms (all guards on) | 0/6 | 0/6 |
+| Undefended attack success (42 attacks) | 83.3% (CI 69.4–91.7%); 81.0% on an earlier run | 0/42 (CI 0–8.4%) |
+| All five guards, attacks replayed | 0/42 (CI 0–8.4%) | 0/42 |
+| All five guards, retrying four mutations | 0/42 | 0/42 |
+| Each guard alone blocks (Qwen) | L1 83.3% · L4 50.0% · L3 26.2% · L2 21.4% · L5 7.1% | nothing to block |
+| Benign: false breaches / L1 false alarms | 0/6 / 0/6 | 0/6 / 0/6 |
 | Benign: useful answers, no guards → all guards | 4/4 → 4/4 | 4/4 → 4/4 |
-| L1 classifier latency, idle CPU | p50 33 ms, max 38 ms | same classifier |
-| Cost per benign question | $0 | ≈ $0.0005 |
+| L1 latency | idle p50 33 ms; in a campaign p50 54–59 ms, p99 140–192 ms | same classifier |
+| Cost of a full campaign | $0 (683 calls) | $0.21 (815 calls) |

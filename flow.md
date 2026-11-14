@@ -38,3 +38,16 @@ flowchart TD
   K --> L{"Benign + utility, both models"}
   L -->|"0/6 false, 0/6 blocked,<br/>useful 4/4 → 4/4"| M["Full Qwen campaign<br/>with real guards: running"]
 ```
+
+```mermaid
+flowchart TD
+  A{"Full campaigns, real guards"} -->|"Haiku crashed twice:<br/>httpx2.ConnectTimeout (Wi-Fi/DNS)"| B["6 retries + 20 s connect timeout;<br/>runs wrapped in caffeinate"]
+  A -->|"Qwen stalled:<br/>one reply at 4,400+ tokens"| C["1,024-token answer cap<br/>for local models"]
+  B --> D{"Haiku, 42 attacks"}
+  C --> E{"Qwen, 42 attacks"}
+  D -->|"0% undefended, 0% defended;<br/>815 calls, $0.21"| F{"Spot-check by hand"}
+  E -->|"83.3% undefended → 0% defended;<br/>L1 alone blocks 83.3%"| F
+  F -->|"L4 only: Qwen leaked the code<br/>while refusing"| G["Relabelled 'adaptive' (4 fixed mutations)<br/>and L4 on the board"]
+  G --> H["README, why.md, screenshots updated"]
+  H --> I["Committed; pushed to<br/>github.com/shivastuu/redcell main"]
+```
