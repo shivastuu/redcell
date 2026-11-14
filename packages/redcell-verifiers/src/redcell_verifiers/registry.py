@@ -11,7 +11,7 @@ import os
 from redcell_core.ids import source_version
 from redcell_core.schemas import AttackTrace, Verdict
 from redcell_core.tracing import traced
-from redcell_verifiers import canary, pii_secret, schema, unauthorized_tool
+from redcell_verifiers import canary, output_channel, pii_secret, unauthorized_tool
 
 # verifier_version pins the exact criteria a corpus was scored under.
 _HERE = os.path.dirname(__file__)
@@ -19,7 +19,7 @@ VERIFIER_VERSION = source_version(
     os.path.join(_HERE, "canary.py"),
     os.path.join(_HERE, "unauthorized_tool.py"),
     os.path.join(_HERE, "pii_secret.py"),
-    os.path.join(_HERE, "schema.py"),
+    os.path.join(_HERE, "output_channel.py"),
 )
 
 
@@ -29,7 +29,7 @@ def run_all(trace: AttackTrace) -> Verdict:
         canary.verify(trace, VERIFIER_VERSION),
         unauthorized_tool.verify(trace, verifier_version=VERIFIER_VERSION),
         pii_secret.verify(trace, VERIFIER_VERSION),
-        schema.verify(trace, VERIFIER_VERSION),
+        output_channel.verify(trace, VERIFIER_VERSION),
         # TODO Phase 3: precondition-bypass verifier (V5)
     )
     return Verdict(attempt_id=trace.attempt_id, results=results)

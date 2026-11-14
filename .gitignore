@@ -21,3 +21,7 @@ node_modules/
 
 # os
 .DS_Store
+
+# live leaderboard (transient)
+dashboard/progress/
+dashboard/*.tmp

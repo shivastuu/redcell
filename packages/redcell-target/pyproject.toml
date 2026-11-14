@@ -7,6 +7,7 @@ dependencies = [
     "redcell-core",
     "fastmcp>=2.0",
     "anthropic>=0.40",
+    "openai>=1.0",          # local targets via Ollama's OpenAI-compatible endpoint
 ]
 
 [build-system]

@@ -1,92 +1,92 @@
 {
-  "target": "sim",
-  "corpus_version": "v1.0.0+99e2909cb788",
+  "target": "live:claude-haiku-5-5",
+  "corpus_version": "v1.0.0+f785514480df",
   "asr": {
     "baseline": {
-      "asr": 0.5952380952380952,
-      "lo": 0.44494045528177417,
-      "hi": 0.7295735232879093,
-      "k": 25,
-      "n": 42
+      "asr": 0.0,
+      "lo": 0.0,
+      "hi": 0.35433884297520657,
+      "k": 0,
+      "n": 7
     },
     "defended_frozen": {
       "asr": 0.0,
       "lo": 0.0,
-      "hi": 0.08380161250916197,
+      "hi": 0.35433884297520657,
       "k": 0,
-      "n": 42
+      "n": 7
     },
     "defended_adaptive": {
-      "asr": 0.30952380952380953,
-      "lo": 0.1907092651972273,
-      "hi": 0.46026277766340595,
-      "k": 13,
-      "n": 42
+      "asr": 0.0,
+      "lo": 0.0,
+      "hi": 0.35433884297520657,
+      "k": 0,
+      "n": 7
     }
   },
   "owasp": [
     {
       "category": "LLM01",
-      "baseline": 0.6666666666666666,
+      "baseline": 0.0,
       "defended": 0.0,
-      "n": 12
+      "n": 2
     },
     {
       "category": "LLM02",
-      "baseline": 0.8333333333333334,
+      "baseline": 0.0,
       "defended": 0.0,
-      "n": 6
+      "n": 1
     },
     {
       "category": "LLM05",
-      "baseline": 0.6666666666666666,
+      "baseline": 0.0,
       "defended": 0.0,
-      "n": 6
+      "n": 1
     },
     {
       "category": "LLM06",
-      "baseline": 0.4166666666666667,
+      "baseline": 0.0,
       "defended": 0.0,
-      "n": 12
+      "n": 2
     },
     {
       "category": "LLM07",
-      "baseline": 0.5,
+      "baseline": 0.0,
       "defended": 0.0,
-      "n": 6
+      "n": 1
     }
   ],
   "layers": [
     {
       "name": "L1 input classifier",
       "asr": 0.0,
-      "kills": 0.5952380952380952
+      "kills": 0.0
     },
     {
       "name": "L2 spotlighting",
-      "asr": 0.42857142857142855,
-      "kills": 0.16666666666666669
+      "asr": 0.0,
+      "kills": 0.0
     },
     {
       "name": "L3 tool allowlist",
-      "asr": 0.47619047619047616,
-      "kills": 0.11904761904761907
+      "asr": 0.0,
+      "kills": 0.0
     },
     {
       "name": "L4 PII/canary redact",
-      "asr": 0.21428571428571427,
-      "kills": 0.38095238095238093
+      "asr": 0.0,
+      "kills": 0.0
     },
     {
       "name": "L5 schema validation",
-      "asr": 0.5,
-      "kills": 0.09523809523809523
+      "asr": 0.0,
+      "kills": 0.0
     }
   ],
   "cost": {
-    "all_frontier_usd": 4.23,
-    "routed_usd": 1.56,
-    "mutation_cost_cut_pct": 63,
-    "attacks_per_usd": 91
+    "model_calls": 140,
+    "input_tokens": 198630,
+    "output_tokens": 34529,
+    "usd": 0.0371
   }
 }

@@ -48,10 +48,10 @@ def main() -> None:
     cfg = DefenseConfig.full()
     if args.drop:
         d = {"l1": "l1_input_classifier", "l2": "l2_spotlight", "l3": "l3_allowlist",
-             "l4": "l4_redact", "l5": "l5_schema"}
+             "l4": "l4_redact", "l5": "l5_output"}
         kwargs = {v: (d.get(k.lower()) not in {d[x.lower()] for x in args.drop}) for k, v in
                   [("L1", "l1_input_classifier"), ("L2", "l2_spotlight"), ("L3", "l3_allowlist"),
-                   ("L4", "l4_redact"), ("L5", "l5_schema")]}
+                   ("L4", "l4_redact"), ("L5", "l5_output")]}
         cfg = DefenseConfig(**kwargs)
 
     base, defended, clean = run(cfg)

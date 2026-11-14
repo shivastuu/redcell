@@ -34,7 +34,7 @@ def test_adaptive_recovers_above_frozen():
 
 
 def test_structural_controls_hold_under_adaptation():
-    # L3 allowlist / L2 spotlight / L5 schema classes stay blocked even adaptively
+    # L3 allowlist / L2 spotlight / L5 render-safe output classes stay blocked even adaptively
     ad = by_owasp(_ADAPT)
     for cat in ("LLM06", "LLM05"):                   # unauthorized-tool + hidden-channel
         breached, n = ad.get(cat, (0, 0))

@@ -16,6 +16,10 @@ jobs:
         run: |
           python3 scripts/demo_verifier.py
           python3 tests/test_verifier_determinism.py
+          python3 tests/test_specs.py
+          python3 tests/test_cost.py
+          python3 tests/test_leaderboard.py
+          python3 tests/test_guards.py
           python3 tests/test_campaign_asr_collapse.py
           python3 tests/test_seed.py
           python3 tests/test_eval.py

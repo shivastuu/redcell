@@ -72,11 +72,11 @@ export default function Page() {
         misses {(evalData as any).fn} encoded-exfil cases the verifier catches
       </p>
 
-      <h2>Cost — heterogeneous routing</h2>
+      <h2>Cost — token counts reported by the model API</h2>
       <p className="mono" style={{ color: "var(--muted)" }}>
-        all-frontier ${scorecard.cost.all_frontier_usd} → routed ${scorecard.cost.routed_usd} &nbsp;·&nbsp;
-        mutation cost cut ~{scorecard.cost.mutation_cost_cut_pct}% &nbsp;·&nbsp;
-        {scorecard.cost.attacks_per_usd} attacks/$
+        {scorecard.cost.model_calls} model calls &nbsp;·&nbsp;
+        {scorecard.cost.input_tokens.toLocaleString()} input + {scorecard.cost.output_tokens.toLocaleString()} output tokens &nbsp;·&nbsp;
+        ${scorecard.cost.usd}
       </p>
 
       <div className="note">

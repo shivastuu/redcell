@@ -12,8 +12,15 @@ from dataclasses import dataclass
 # NOTE: verify these ids/prices against provider docs before quoting them anywhere.
 PLANNER_MODEL = os.getenv("REDCELL_PLANNER_MODEL", "claude-opus-4-8")
 JUDGE_MODEL = os.getenv("REDCELL_JUDGE_MODEL", "claude-sonnet-5")
-TARGET_MODEL = os.getenv("REDCELL_TARGET_MODEL", "claude-haiku-4-5")
+TARGET_MODEL = os.getenv("REDCELL_TARGET_MODEL", "qwen2.5:7b")   # or claude-haiku-5-5
 MUTATOR_MODEL = os.getenv("REDCELL_MUTATOR_MODEL", "Qwen/Qwen3-8B")
+
+# USD per million tokens (input, output): Anthropic list prices, checked 2026-11.
+# Local models cost $0. A claude-* model missing here reports cost as unknown.
+PRICE_PER_MTOK = {
+    "claude-haiku-5-5": (0.10, 0.50),     # prompts up to 100K tokens
+    "claude-opus-5-5": (4.00, 20.00),
+}
 
 
 @dataclass(frozen=True)
