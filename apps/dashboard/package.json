@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "sync": "cp ../../dashboard/scorecard.json data/scorecard.json && cp ../../dashboard/eval.json data/eval.json",
     "dev": "next dev",
     "build": "next build",
     "start": "next start"

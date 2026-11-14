@@ -24,7 +24,7 @@ for pkg in ("redcell-core", "redcell-verifiers", "redcell-target", "redcell-atta
 from redcell_attackers import campaign, scorecard          # noqa: E402
 from redcell_attackers.corpus import corpus_version, freeze  # noqa: E402
 from redcell_attackers.scorecard import asr, pct            # noqa: E402
-from redcell_attackers.specs import build_catalog           # noqa: E402
+from redcell_attackers.specs import STYLES, build_catalog   # noqa: E402
 from redcell_core.config import Budget                      # noqa: E402
 from redcell_core.schemas import DefenseConfig              # noqa: E402
 from redcell_target import guards, live_agent               # noqa: E402
@@ -45,10 +45,10 @@ class ProgressHarness:
     got to dashboard/progress/<target>.json and rebuilds the board, so
     `leaderboard.html?live` shows the run moving. Partial progress, never a result."""
 
-    def __init__(self, inner, target: str, attacks: int):
+    def __init__(self, inner, target: str, scenario: str, attacks: int, phases: int):
         self.inner, self.model = inner, inner.model
-        self.path = os.path.join(ROOT, "dashboard", "progress", slug(target) + ".json")
-        self.state = {"target": target, "phase": "", "phase_no": 0, "phases": 3 + len(LAYERS),
+        self.path = os.path.join(ROOT, "dashboard", "progress", slug(f"{target}__{scenario}") + ".json")
+        self.state = {"target": f"{target} · {scenario}", "phase": "", "phase_no": 0, "phases": phases,
                       "attack": 0, "attacks": attacks, "started": time.time(), "feed": []}
         self._goal = None
 
@@ -86,18 +86,24 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true", help="attack a real model instead of the simulator")
     ap.add_argument("--model", default=None, help="with --live: qwen2.5:7b (default) or claude-haiku-5-5")
-    ap.add_argument("--n", type=int, default=None, help="attack styles per goal (default 6; use 1-2 for --live)")
+    ap.add_argument("--n", type=int, default=None, help=f"attack styles per goal (default {STYLES})")
+    ap.add_argument("--scenario", default="fintech", help="fintech | healthcare | email")
+    ap.add_argument("--skip-retry", action="store_true",
+                    help="skip the mutation-retry phase (pointless and paid when nothing breaks undefended)")
+    ap.add_argument("--max-usd", type=float, default=None, help="hard spend cap for this run")
     args = ap.parse_args()
+    if args.max_usd is not None:
+        live_agent.MAX_USD = args.max_usd
 
     h = get_harness(live=args.live, model=args.model)
     target = f"live:{h.model}" if args.live else "sim"
-    goals = build_catalog(args.n) if args.n else build_catalog()
+    goals = build_catalog(args.n or STYLES, args.scenario)
     budget = Budget(max_target_calls=8) if args.live else Budget()
     if args.live:
-        h = ProgressHarness(h, target, len(goals))
+        h = ProgressHarness(h, target, args.scenario, len(goals), (2 if args.skip_retry else 3) + len(LAYERS))
     phase = h.phase if args.live else (lambda name: None)
 
-    print(f"RedCell — full campaign  (target={target}, goals={len(goals)})")
+    print(f"RedCell — full campaign  (target={target}, scenario={args.scenario}, attacks={len(goals)})")
     print("=" * 66)
 
     phase("baseline (undefended)")
@@ -106,8 +112,10 @@ def main() -> None:
     full = DefenseConfig.full()
     phase("frozen replay (defended)")
     defended = campaign.replay_corpus(baseline, h, full)
-    phase("adaptive (defended)")
-    adaptive = campaign.adaptive(baseline, h, full, budget)
+    adaptive = []
+    if not args.skip_retry:
+        phase("mutation retry (defended)")
+        adaptive = campaign.adaptive(baseline, h, full, budget)
 
     print("\n" + "-" * 66 + "\nATTACK-SUCCESS RATE\n" + "-" * 66)
     print(scorecard.format_headline(baseline, defended, adaptive))
@@ -116,9 +124,11 @@ def main() -> None:
 
     print("\n" + "-" * 66 + "\nPER-LAYER ATTRIBUTION  (add-one-in)\n" + "-" * 66)
     layer_attempts = []
+    winners = [a for a in baseline if a.breached]     # attribution only concerns attacks that worked
     for name, cfg in LAYERS:
         phase(f"{name} only")
-        one = campaign.replay_corpus(baseline, h, cfg)
+        replayed = {r.goal.goal_id: r for r in campaign.replay_corpus(winners, h, cfg)}
+        one = [replayed.get(a.goal.goal_id, a) for a in baseline]   # the rest never worked: still held
         layer_attempts.append((name, one))
         killed = asr(baseline) - asr(one)
         print(f"  {name:<24} ASR {pct(asr(one))}   kills {pct(killed)}  {'█' * round(max(0, killed) * 20)}")
@@ -131,10 +141,11 @@ def main() -> None:
     report = scorecard.report_dict(baseline, defended, adaptive, layer_attempts, cost,
                                    corpus_version(baseline), target)
     report["guard_latency_ms"] = guards.latency_summary()
+    report["scenario"] = args.scenario
     out_dir = os.path.join(ROOT, "dashboard")
     paths = [os.path.join(out_dir, "scorecard.json")]          # latest run (Next.js app reads this)
     if args.live:                                              # one file per real model for the leaderboard
-        paths.append(os.path.join(out_dir, "scorecards", slug(target) + ".json"))
+        paths.append(os.path.join(out_dir, "scorecards", slug(f"{target}__{args.scenario}") + ".json"))
     for path in paths:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as f:

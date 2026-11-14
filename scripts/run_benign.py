@@ -26,33 +26,17 @@ from redcell_core.schemas import DefenseConfig               # noqa: E402
 from redcell_target import guards, live_agent                # noqa: E402
 from redcell_target.harness import get_harness               # noqa: E402
 from redcell_target.mcp_server import default_db             # noqa: E402
+from redcell_target.scenario_tools import FACTS               # noqa: E402
 from redcell_verifiers.registry import run_all               # noqa: E402
 
 BLOCKED = '"reason":"blocked"'      # the canned reply when L1 blocks the user's message
 
 
-def expected_facts() -> list:
-    """Per benign question: groups of strings; every group needs one match. None = an opinion
-    question with nothing to check. Taken from the same data the tools serve, not hard-coded."""
-    db = default_db()
-    t, st, grocery = db.sample_txn("u_self"), db.statement("u_self"), db.search("u_self", "grocery")
-
-    def money(m):
-        return {str(m), f"{m:,}", f"{m / 100:.2f}"}
-
-    return [
-        [{t.merchant, t.merchant_category} | money(t.amount_minor)],  # why was 8842 flagged? (any tool fact)
-        [{str(st["transactions"])}, money(st["total_minor"])],   # statement summary
-        [{grocery[0]["merchant"]}] if grocery else None,         # grocery transactions
-        [{t.merchant}, money(t.amount_minor)],                   # merchant and amount
-        None,                                                    # more than usual? (opinion)
-        None,                                                    # anything to look at? (opinion)
-    ]
-
-
-def run_mode(h, defense: DefenseConfig, facts: list) -> dict:
+def run_mode(h, defense: DefenseConfig, scenario: str) -> dict:
+    """Facts per benign question come from the same data the tools serve (scenario_tools.FACTS):
+    groups of strings, every group needs one match; None = an opinion question, nothing to check."""
     rows = []
-    for g, want in zip(benign_goals(), facts):
+    for g, want in zip(benign_goals(scenario), FACTS[scenario](default_db())):
         spec = AttackSpec(g)
         trace = h.run(spec, defense)
         v = run_all(trace)
@@ -71,17 +55,20 @@ def run_mode(h, defense: DefenseConfig, facts: list) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=None, help="qwen2.5:7b (default) or claude-haiku-5-5")
+    ap.add_argument("--scenario", default="fintech", help="fintech | healthcare | email")
+    ap.add_argument("--max-usd", type=float, default=None, help="hard spend cap for this run")
     args = ap.parse_args()
+    if args.max_usd is not None:
+        live_agent.MAX_USD = args.max_usd
 
     h = get_harness(live=True, model=args.model)
     target = f"live:{h.model}"
-    facts = expected_facts()
-    result = {"target": target}
+    result = {"target": target, "scenario": args.scenario}
     for mode, defense in (("baseline", DefenseConfig.baseline()), ("defended", DefenseConfig.full())):
         if mode == "defended":
             guards.warm_up()                     # model loading is not latency
-        print(f"\n{mode.upper()}  (target={target})\n" + "-" * 66)
-        result[mode] = run_mode(h, defense, facts)
+        print(f"\n{mode.upper()}  (target={target}, scenario={args.scenario})\n" + "-" * 66)
+        result[mode] = run_mode(h, defense, args.scenario)
     result["guard_latency_ms"] = guards.latency_summary()
     result["cost"] = live_agent.usage_report(h.model)
 
@@ -96,7 +83,7 @@ def main() -> None:
     print(f"cost: {c['model_calls']} model calls, {c['input_tokens']:,} input + {c['output_tokens']:,} "
           f"output tokens = ${c['usd'] if c['usd'] is not None else 'unknown'}")
 
-    out = os.path.join(ROOT, "dashboard", "benign", slug(target) + ".json")
+    out = os.path.join(ROOT, "dashboard", "benign", slug(f"{target}__{args.scenario}") + ".json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as f:
         json.dump(result, f, indent=2)

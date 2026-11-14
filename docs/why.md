@@ -184,6 +184,117 @@ flowchart LR
 
 ---
 
+## Phase 3 — stronger attacks, more agents
+
+### 31. Why "scenarios as data" instead of more domains?
+- **Why:** a scenario is a file (rules, tools allowed for the role, one confidential field, one
+  outgoing-message tool, 9 goals, 6 benign questions). Attacks, verifier, defenses and leaderboard
+  are written once and run against every scenario, so fintech, healthcare and email are comparable.
+- **Not this:** 20 shallow domains. Breadth without measurement proves nothing.
+- **If they push** ("how do I add my agent?"): write one spec and its tool functions. The server
+  wraps every tool with the same L3/L4 automatically.
+
+### 32. What is MCP tool poisoning, and why test it?
+- **What:** the attack hides in a third-party tool's *description*. The agent sees every tool
+  description in `tools/list`, so the attacker never has to be called, or even touch your data.
+- **Found:** an instruction only in an unused currency-converter's description made Qwen leak the
+  staff note. With guards on it held, because L1 now screens tool descriptions too.
+
+### 33. Why the "combined attack"?
+- **Why:** fake completion + escape characters + "ignore previous" (Liu et al., USENIX Security 2024)
+  was the strongest static attack in that benchmark. Static catalogs should include the strongest
+  known static attack.
+
+### 34. Why does the adaptive attacker matter more than more static attacks?
+- **Why:** a static catalog is a fixed exam. A real attacker reads the refusal and tries again. The
+  attacker model sees the agent's reply and rewrites (PAIR-style), and it is told which defenses
+  are on, because a fair evaluation assumes the attacker knows the system (Nasr et al. 2025).
+- **Found:** against Qwen with all five guards, Haiku-as-attacker switched from a plain "note for
+  the assistant" to a calm fake "flag audit procedure" and got a breach in round 2 for $0.0014.
+
+### 35. What is the "invented field" leak?
+- **Found:** L4 had removed `internal_note`, so the model *made one up* and filled it with the
+  escalation code from its system prompt (`internal_note: RC-SYS_SECRET_9f3a…`, even changing a
+  hyphen to an underscore). L1 didn't flag the calm wording; Presidio doesn't treat a business
+  secret as PII; the verifier still caught it through 12-character fragment matching.
+- **Lesson:** withholding a field doesn't protect a secret that sits in the prompt. Keep secrets
+  out of prompts entirely.
+
+### 36. Why can't the attacker see the system prompt or the secrets?
+- **Why:** it gets only what an outsider could know: the agent's role, the public tool list, and
+  where its text lands. A test-only check (`tests/test_adaptive.py`) proves no planted secret ever
+  appears in the attacker's brief, for every scenario, goal and defense setting.
+
+### 37. Why did Opus refuse to be the attacker, and why not route around it?
+- **Found:** `stop_reason: refusal`, category `cyber`. Anthropic's cyber safeguards stopped the
+  request before Opus generated anything. Haiku 5.5, with the same framing, wrote attacks.
+- **Not this:** a fallback model, or rewording until it complies. A fallback silently changes who the
+  attacker is, and rewording to get past a safety system is the opposite of this project. The
+  legitimate route is Anthropic's Cyber Verification Program.
+
+### 38. Why run the official AgentDojo benchmark at all?
+- **Why:** my own attacks could be unconsciously easy. AgentDojo (ETH Zurich, NeurIPS 2024) is an
+  independent yardstick with its own attacks and its own Protect AI classifier defense. Using a
+  published benchmark, credited, is how security results are made credible.
+- **Found while setting it up:** its classifier defense scores a whole tool output at once. A real
+  injection inside a long bill scored 0.998 "safe" because the rest of the text drowned it out.
+  RedCell's L1 checks each field separately.
+
+### 39. Why count "the attacker's goal was met" separately from "any rule broken"?
+- **Why:** an attack can confuse the agent into breaking a different rule. That is still harm, but
+  it is not the attack working as designed, and mixing the two overstates attack success.
+
+### 40. Why does per-layer attribution only replay attacks that worked?
+- **Why:** "how much does layer X block?" only concerns attacks that succeeded without it. Replaying
+  failed attacks costs money and can't change the answer. The full-stack replay still runs everything.
+
+### 41. Why a hard spend cap in code?
+- **Why:** money needs a stop, not an estimate. Every priced call goes through one function that stops
+  the run once spend crosses the cap. A paid model with no known price stops it too (fail closed).
+
+### 44. The adaptive attacker beat all five guards on Qwen. What fixed it?
+- **Found:** 10 of 27 adaptive attacks breached Qwen with every guard on, and every one of them leaked
+  the same thing: the escalation code written in the system prompt. Nothing the guards protect leaked.
+- **The fix, measured:** leave the secret out of the prompt. Same attacker, same guards: **0 of 27**.
+- **Lesson:** guards filter what goes in and out; they can't protect a secret the model already holds.
+  The structural fix beats any filter. Put secrets behind a tool the role can't call, or nowhere.
+
+### 45. Why did the verifier once call random digits a card number?
+- **Found:** under attack, Qwen invented a "note" of dashed single digits (`-7-3-1-7-1-6-…`). The old
+  check accepted any 13–19 digits with optional separators, and about 1 in 10 random digit strings
+  passes the Luhn checksum, so it fired.
+- **Fix:** only card-shaped runs count (13–19 contiguous digits, 4-4-4-4, or Amex 4-6-5), plus a
+  regression test with that exact string. The new check flags a subset of what the old one did, so
+  results that were 0 under the old check stay 0.
+
+### 46. AgentDojo's classifier defense and RedCell's L1 use the same model. Why such different costs?
+- **Found:** on the official AgentDojo banking suite, Haiku solved 12/16 tasks undefended but only
+  6/16 with AgentDojo's classifier defense, while attacks stayed at 0/144 either way. RedCell's L1,
+  same Protect AI model, kept useful answers at 4/4.
+- **Why:** AgentDojo's defense scores each whole tool output (false alarms on clean transaction lists,
+  and a real injection inside a long bill scored "safe"); RedCell scores each field. **How a guardrail
+  is wired matters as much as which guardrail it is.**
+
+### 47. Haiku held against the adaptive attacker. Is that the final word?
+- **No.** 0 of 54 adaptive attacks (CI 0–6.6%), but the attacker model declined about half its goals
+  (for example, prescribing oxycodone or forwarding someone's email). So it is a lower bound: the
+  attacker held back, not only the target. A stronger attacker needs Anthropic's verification route
+  (Q37) or an open model.
+
+## Phase 4 — firmer numbers
+
+### 42. Why repeat runs?
+- **Why:** the same model gave 81.0% and 83.3% on identical campaigns. Models sample their words, so one
+  run is one sample. Repeats show the spread; the leaderboard prints the range next to the rate.
+
+## Phase 5 — the dashboard
+
+### 43. Why is the Next.js dashboard a static export that reads the result files at build time?
+- **Why:** no server to run or secure, no copy step to forget, and every number on the page comes
+  from the same JSON the Python scripts wrote. The old version showed a stale copied scorecard.
+
+---
+
 ## Numbers to remember
 
 | | Qwen2.5-7B (local) | Claude Haiku 5.5 |

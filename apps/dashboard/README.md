@@ -1,20 +1,15 @@
 # RedCell Dashboard (Next.js)
 
-The shareable web leaderboard. Reads `data/scorecard.json` + `data/eval.json`
-(produced by the Python campaign) and renders the ASR collapse, per-OWASP, per-layer,
-judge-κ, and cost — the same numbers as the offline `dashboard/leaderboard.html`.
+The shareable web version of the leaderboard. At build time it reads every result file the Python
+scripts write under `../../dashboard/` (scorecards, benign controls, repeated runs, adaptive-attacker
+runs and the AgentDojo check) and exports a static site to `out/`. There is no server and no copy step.
 
 ```bash
-# from the repo root, regenerate the data:
-python3 scripts/run_campaign.py && python3 scripts/run_eval.py
-
-# then run the app:
 cd apps/dashboard
-npm install        # or pnpm install
-npm run sync       # copy the latest scorecard.json + eval.json into data/
-npm run dev        # http://localhost:3000
+npm install
+npm run build      # static site in out/
+npm run dev        # http://localhost:3000 while editing
 ```
 
-Deploy: Vercel (first-party Next.js). Point it at `apps/dashboard`. For live trace
-deep-links, add `LANGSMITH_PROJECT` / Langfuse links per row (TODO — the trace ids
-are already in the Python `AttackTrace`; surface them into scorecard.json first).
+Deploy `out/` to any static host. The self-contained `dashboard/leaderboard.html`
+(`scripts/build_leaderboard.py`) shows the same numbers, plus the live attack feed during a run.

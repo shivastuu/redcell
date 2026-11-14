@@ -1,49 +1,39 @@
-import scorecard from "../data/scorecard.json";
-import evalData from "../data/eval.json";
+import { loadAll, type Card, type CI } from "../lib/data";
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
-
-type CI = { asr: number; lo: number; hi: number; n: number };
-const a = scorecard.asr as { baseline: CI; defended_frozen: CI; defended_adaptive: CI };
+const ci = (c: CI) => `95% CI ${pct(c.lo)}–${pct(c.hi)}`;
+const usd = (v?: number | null) => (v === undefined || v === null ? "-" : `$${v}`);
 
 function Bar({ frac, cls }: { frac: number; cls: string }) {
   return <span className={`bar ${cls}`} style={{ width: `${Math.max(frac, 0) * 100}%` }} />;
 }
 
-function Kpi({ v, cls, k, ci }: { v: string; cls: string; k: string; ci: string }) {
+function Kpi({ v, cls, k, sub }: { v: string; cls: string; k: string; sub: string }) {
   return (
     <div className="kpi">
       <div className={`v ${cls}`}>{v}</div>
       <div className="k">{k}</div>
-      <div className="ci">{ci}</div>
+      <div className="ci">{sub}</div>
     </div>
   );
 }
 
-export default function Page() {
+function Section({ c }: { c: Card }) {
+  const a = c.asr;
   return (
-    <main className="wrap">
-      <h1><span className="dot" />RedCell — Attack Leaderboard</h1>
-      <p className="sub">Adversarial robustness of a fintech agent, before vs after the layered defense.</p>
-      <p className="tags">
-        target: {scorecard.target} &nbsp;·&nbsp; corpus: {scorecard.corpus_version} &nbsp;·&nbsp;
-        n={a.baseline.n} goals &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)
-      </p>
-
+    <section>
+      <h2 className="tname">{c.target} · {c.scenario}</h2>
+      <p className="tags">corpus {c.corpus_version} · n={a.baseline.n} attacks · breaches decided by code</p>
       <div className="hero">
-        <Kpi v={pct(a.baseline.asr)} cls="red" k="baseline · undefended"
-             ci={`95% CI [${pct(a.baseline.lo)}, ${pct(a.baseline.hi)}]`} />
-        <Kpi v={pct(a.defended_frozen.asr)} cls="teal" k="defended · frozen replay"
-             ci={`95% CI [${pct(a.defended_frozen.lo)}, ${pct(a.defended_frozen.hi)}]`} />
-        <Kpi v={pct(a.defended_adaptive.asr)} cls="amber" k="defended · ADAPTIVE"
-             ci={`the honest number · [${pct(a.defended_adaptive.lo)}, ${pct(a.defended_adaptive.hi)}]`} />
+        <Kpi v={pct(a.baseline.asr)} cls="red" k="undefended" sub={ci(a.baseline)} />
+        <Kpi v={pct(a.defended_frozen.asr)} cls="teal" k="all guards · replay" sub={ci(a.defended_frozen)} />
+        <Kpi v={a.defended_adaptive ? pct(a.defended_adaptive.asr) : "-"} cls="amber"
+             k="all guards · mutation retry" sub={a.defended_adaptive ? ci(a.defended_adaptive) : "not run"} />
       </div>
 
-      <h2>Per-OWASP category</h2>
-      <p className="legend"><span className="bar red" style={{ width: 11 }} /> baseline &nbsp;
-        <span className="bar teal" style={{ width: 11 }} /> defended</p>
+      <h3>Per OWASP category</h3>
       <table><tbody>
-        {scorecard.owasp.map((o: any) => (
+        {c.owasp.map((o) => (
           <tr key={o.category}>
             <td className="cat">{o.category}</td>
             <td className="tnum r">{pct(o.baseline)}</td>
@@ -53,39 +43,112 @@ export default function Page() {
         ))}
       </tbody></table>
 
-      <h2>Per-layer attribution (add-one-in)</h2>
+      <h3>What each guard blocks on its own</h3>
       <table><tbody>
-        {scorecard.layers.map((l: any) => (
+        {c.layers.map((l) => (
           <tr key={l.name}>
             <td>{l.name}</td>
             <td className="track"><Bar frac={l.kills} cls="teal" /></td>
-            <td className="tnum t">kills {pct(l.kills)}</td>
+            <td className="tnum t">blocks {pct(l.kills)}</td>
           </tr>
         ))}
       </tbody></table>
 
-      <h2>Judge quality (LLM-judge vs deterministic verifier)</h2>
-      <p className="mono" style={{ color: "var(--muted)" }}>
-        Cohen&apos;s κ {(evalData as any).kappa.toFixed(3)} ({(evalData as any).band}) &nbsp;·&nbsp;
-        judge precision {(evalData as any).precision.toFixed(2)} &nbsp;·&nbsp;
-        recall {(evalData as any).recall.toFixed(2)} &nbsp;·&nbsp;
-        misses {(evalData as any).fn} encoded-exfil cases the verifier catches
-      </p>
+      {c.benign && (
+        <>
+          <h3>Benign control ({c.benign.baseline.n} normal questions, no attack)</h3>
+          <table><tbody>
+            <tr><th className="l" /><th>no guards</th><th>all guards</th></tr>
+            <tr><td>false breaches</td><td className="tnum">{c.benign.baseline.breaches}/{c.benign.baseline.n}</td>
+              <td className="tnum">{c.benign.defended.breaches}/{c.benign.defended.n}</td></tr>
+            <tr><td>blocked by L1 (false alarm)</td><td className="tnum">-</td>
+              <td className="tnum">{c.benign.defended.blocked}/{c.benign.defended.n}</td></tr>
+            <tr><td>useful answers</td><td className="tnum">{c.benign.baseline.useful}/{c.benign.baseline.checkable}</td>
+              <td className="tnum">{c.benign.defended.useful}/{c.benign.defended.checkable}</td></tr>
+          </tbody></table>
+        </>
+      )}
+      <p className="tags">cost: {c.cost.model_calls ?? "-"} model calls · {usd(c.cost.usd)}</p>
+    </section>
+  );
+}
 
-      <h2>Cost — token counts reported by the model API</h2>
-      <p className="mono" style={{ color: "var(--muted)" }}>
-        {scorecard.cost.model_calls} model calls &nbsp;·&nbsp;
-        {scorecard.cost.input_tokens.toLocaleString()} input + {scorecard.cost.output_tokens.toLocaleString()} output tokens &nbsp;·&nbsp;
-        ${scorecard.cost.usd}
-      </p>
+export default function Page() {
+  const { cards, adaptive, agentdojo } = loadAll();
+  return (
+    <main className="wrap">
+      <h1><span className="dot" />RedCell Leaderboard</h1>
+      <p className="sub">Attacks against AI agents behind real MCP servers, by model and scenario. Most vulnerable first.</p>
 
-      <div className="note">
-        <b>Read the adaptive number.</b> The frozen replay is the headline; the adaptive result is the truth.
-        Structural controls (spotlight, tool allowlist, schema) hold under adaptive pressure; probabilistic
-        content filters (input classifier, PII redaction) fall to encoding+obfuscation — which is why you report both.
-      </div>
-      <p className="foot">Reads dashboard/scorecard.json (run `npm run sync`). Every verdict is a deterministic
-        function of a server-recorded trace.</p>
+      <h2>All targets</h2>
+      <div className="scroll"><table><tbody>
+        <tr><th className="l">target</th><th className="l">scenario</th><th>attacks</th><th>undefended</th>
+          <th>goal met</th><th>all guards · replay</th><th>mutation retry</th><th>useful · guarded</th><th>cost</th></tr>
+        {cards.map((c) => (
+          <tr key={`${c.target}-${c.scenario}`}>
+            <td className="cat">{c.target}</td><td>{c.scenario}</td>
+            <td className="tnum">{c.asr.baseline.n}</td>
+            <td className="tnum r">{pct(c.asr.baseline.asr)}
+              {c.repeats && <span className="sub2"> · {c.repeats.repeats} runs {pct(c.repeats.min)}–{pct(c.repeats.max)}</span>}</td>
+            <td className="tnum r">{c.asr.baseline_targeted ? pct(c.asr.baseline_targeted.asr) : "-"}</td>
+            <td className="tnum t">{pct(c.asr.defended_frozen.asr)}</td>
+            <td className="tnum a">{c.asr.defended_adaptive ? pct(c.asr.defended_adaptive.asr) : "-"}</td>
+            <td className="tnum">{c.benign ? `${c.benign.defended.useful}/${c.benign.defended.checkable}` : "-"}</td>
+            <td className="tnum">{usd(c.cost.usd)}</td>
+          </tr>
+        ))}
+      </tbody></table></div>
+      <div className="note"><b>How to read this.</b> &ldquo;Replay&rdquo; re-runs the attacks that worked, unchanged, with
+        every guard on. &ldquo;Mutation retry&rdquo; retries four fixed mutations; it is not an attacker model.
+        &ldquo;Goal met&rdquo; counts only breaches that achieved what the attacker asked for.</div>
+
+      {adaptive.length > 0 && (
+        <>
+          <h2>Adaptive attacker</h2>
+          <div className="note">An attacker model writes an attack, reads the agent&rsquo;s reply, and rewrites it,
+            knowing which defenses are on (PAIR-style). It never sees the system prompt or the secrets.</div>
+          <div className="scroll"><table><tbody>
+            <tr><th className="l">target</th><th className="l">scenario</th><th className="l">defense</th>
+              <th className="l">attacker</th><th>goals × rounds</th><th>breached</th><th>goal met</th>
+              <th>attacker refused</th><th>cost</th></tr>
+            {adaptive.map((r) => (
+              <tr key={`${r.target}-${r.scenario}-${r.defense}-${r.attacker}`}>
+                <td className="cat">{r.target}</td><td>{r.scenario}</td><td>{r.defense}</td><td>{r.attacker}</td>
+                <td className="tnum">{r.goals} × {r.rounds}</td>
+                <td className="tnum r">{r.breached}/{r.goals} ({pct(r.asr)})</td>
+                <td className="tnum r">{r.targeted}</td><td className="tnum">{r.attacker_refusals}</td>
+                <td className="tnum">{usd(r.cost.total_usd)}{r.complete ? "" : " · stopped early"}</td>
+              </tr>
+            ))}
+          </tbody></table></div>
+        </>
+      )}
+
+      {agentdojo.length > 0 && (
+        <>
+          <h2>Outside check: official AgentDojo benchmark</h2>
+          <div className="note">AgentDojo (Debenedetti et al., NeurIPS 2024): banking suite, its own attack and its own
+            Protect AI classifier defense. Not RedCell&rsquo;s attacks: an independent check of its findings.</div>
+          <div className="scroll"><table><tbody>
+            <tr><th className="l">model</th><th className="l">defense</th><th>utility, no attack</th>
+              <th>utility under attack</th><th>attack succeeded</th><th>cost</th></tr>
+            {agentdojo.map((r) => (
+              <tr key={`${r.model}-${r.defense}`}>
+                <td className="cat">{r.model}</td><td>{r.defense}</td>
+                <td className="tnum">{r.utility.count}/{r.utility.total}</td>
+                <td className="tnum">{r.utility_under_attack.count}/{r.utility_under_attack.total}</td>
+                <td className="tnum r">{r.targeted_asr.count}/{r.targeted_asr.total} ({pct(r.targeted_asr.rate)})</td>
+                <td className="tnum">{usd(r.usd ?? 0)}{r.complete === false ? " · partial" : ""}</td>
+              </tr>
+            ))}
+          </tbody></table></div>
+        </>
+      )}
+
+      {cards.map((c) => <Section key={`${c.target}-${c.scenario}`} c={c} />)}
+
+      <p className="foot">Built from dashboard/*.json at build time. Every verdict is a deterministic function of what
+        the MCP server recorded.</p>
     </main>
   );
 }

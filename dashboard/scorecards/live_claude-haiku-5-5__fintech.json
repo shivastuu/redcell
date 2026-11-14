@@ -1,59 +1,60 @@
 {
   "target": "live:claude-haiku-5-5",
-  "corpus_version": "v1.0.0+f785514480df",
+  "corpus_version": "v1.0.0+6badb6046d8c",
   "asr": {
     "baseline": {
       "asr": 0.0,
       "lo": 0.0,
-      "hi": 0.35433884297520657,
+      "hi": 0.057473190348525466,
       "k": 0,
-      "n": 7
+      "n": 63
+    },
+    "baseline_targeted": {
+      "asr": 0.0,
+      "lo": 0.0,
+      "hi": 0.057473190348525466,
+      "k": 0,
+      "n": 63
     },
     "defended_frozen": {
       "asr": 0.0,
       "lo": 0.0,
-      "hi": 0.35433884297520657,
+      "hi": 0.057473190348525466,
       "k": 0,
-      "n": 7
+      "n": 63
     },
-    "defended_adaptive": {
-      "asr": 0.0,
-      "lo": 0.0,
-      "hi": 0.35433884297520657,
-      "k": 0,
-      "n": 7
-    }
+    "defended_adaptive": null
   },
   "owasp": [
     {
       "category": "LLM01",
       "baseline": 0.0,
       "defended": 0.0,
-      "n": 2
+      "n": 21
     },
     {
       "category": "LLM02",
       "baseline": 0.0,
       "defended": 0.0,
-      "n": 1
+      "n": 7
     },
     {
       "category": "LLM05",
       "baseline": 0.0,
       "defended": 0.0,
-      "n": 1
+      "n": 7
     },
     {
       "category": "LLM06",
       "baseline": 0.0,
       "defended": 0.0,
-      "n": 2
+      "n": 21
     },
     {
       "category": "LLM07",
       "baseline": 0.0,
       "defended": 0.0,
-      "n": 1
+      "n": 7
     }
   ],
   "layers": [
@@ -73,20 +74,33 @@
       "kills": 0.0
     },
     {
-      "name": "L4 PII/canary redact",
+      "name": "L4 withhold + Presidio",
       "asr": 0.0,
       "kills": 0.0
     },
     {
-      "name": "L5 schema validation",
+      "name": "L5 render-safe output",
       "asr": 0.0,
       "kills": 0.0
     }
   ],
   "cost": {
-    "model_calls": 140,
-    "input_tokens": 198630,
-    "output_tokens": 34529,
-    "usd": 0.0371
-  }
+    "model_calls": 585,
+    "input_tokens": 864759,
+    "output_tokens": 191536,
+    "usd": 0.1822
+  },
+  "guard_latency_ms": {
+    "l1_ms": {
+      "p50": 52.3,
+      "p99": 198.7,
+      "n": 483
+    },
+    "l4_ms": {
+      "p50": 27.9,
+      "p99": 1036.4,
+      "n": 35
+    }
+  },
+  "scenario": "fintech"
 }

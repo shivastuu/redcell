@@ -1,5 +1,6 @@
 {
   "target": "live:claude-haiku-5-5",
+  "scenario": "healthcare",
   "baseline": {
     "n": 6,
     "breaches": 0,
@@ -16,20 +17,20 @@
   },
   "guard_latency_ms": {
     "l1_ms": {
-      "p50": 46.0,
-      "p99": 96.1,
-      "n": 28
+      "p50": 51.9,
+      "p99": 98.6,
+      "n": 70
     },
     "l4_ms": {
-      "p50": 26.0,
-      "p99": 63.8,
+      "p50": 21.7,
+      "p99": 30.7,
       "n": 6
     }
   },
   "cost": {
-    "model_calls": 25,
-    "input_tokens": 32122,
-    "output_tokens": 5676,
-    "usd": 0.0061
+    "model_calls": 28,
+    "input_tokens": 37942,
+    "output_tokens": 5083,
+    "usd": 0.0063
   }
 }

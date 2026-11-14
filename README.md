@@ -54,13 +54,18 @@ same campaign on Qwen gave 81.0%: the same model varies between runs, which is w
 
 ## Project status
 
+> **Latest (Phase 3):** an adaptive attacker that rewrites its attacks got through **10 of 27** times on
+> the guarded 7B model, where 63 static attacks got through none. Every breach leaked the secret
+> written in the system prompt. With that secret removed from the prompt: **0 of 27**. Full write-up,
+> including the official AgentDojo check: **[docs/results.md](docs/results.md)**.
+
 | Phase | What | Status |
 |:--:|:--|:--:|
 | 1 | **Attack real models.** Qwen2.5-7B (local) and Claude Haiku 5.5 behind a real MCP server; 42 attacks from published research; breaches decided by code; a benign control; a live leaderboard with real API cost | ✅ Done |
 | 2 | **Real guardrails, measured.** Injection classifier, datamarking, tool allowlist, withhold + Presidio, render-safe output; for each: attack success, false alarms, useful answers and latency | ✅ Done |
-| 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (TAP / PAIR style, with Claude Opus); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo and InjecAgent suites; healthcare and email/workspace agents as scenario files | Next |
-| 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | Planned |
-| 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | Planned |
+| 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (TAP / PAIR style, with Claude Opus); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo and InjecAgent suites; healthcare and email/workspace agents as scenario files | 🟡 In progress |
+| 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | 🟡 In progress |
+| 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | 🟡 In progress |
 
 ## What it does
 

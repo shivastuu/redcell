@@ -51,3 +51,22 @@ flowchart TD
   G --> H["README, why.md, screenshots updated"]
   H --> I["Committed; pushed to<br/>github.com/shivastuu/redcell main"]
 ```
+
+## 2026-11-15 — Phases 3–5 (in progress)
+
+```mermaid
+flowchart TD
+  A["decision.md: Phases 3–5 plan<br/>(budget ~$4, user chose)"] --> B["Scenarios as data: fintech,<br/>healthcare, email (core + target)"]
+  B --> C["Tool poisoning + combined attack;<br/>L1 scans tool descriptions"]
+  C --> D{"Tests"}
+  D -->|"48/63 distinct: same words, different<br/>delivery = different attack"| E["Test fixed (vector, payload)"]
+  E --> F["Adaptive attacker (PAIR-style)<br/>+ AgentDojo runner (helper agent)"]
+  F --> G{"Haiku static ×3 scenarios"}
+  G -->|"0/189, useful 4/4 → 4/4, $0.51"| H{"Adaptive vs guarded Qwen"}
+  H -->|"10/27 breached, all the<br/>system-prompt code"| I["--no-prompt-secret experiment"]
+  I -->|"0/27"| J{"Adaptive vs Haiku"}
+  J -->|"0/54; Opus refused (cyber)"| K{"AgentDojo on Haiku"}
+  K -->|"0/144; its classifier<br/>halved utility"| L["Verifier fix: card shape before Luhn"]
+  L --> M["Ollama restarted: 2 parallel, 8K context"]
+  M --> N["Committed locally; Qwen campaigns,<br/>repeats and AgentDojo-Qwen still running"]
+```

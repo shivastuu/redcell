@@ -9,18 +9,28 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for pkg in ("redcell-core", "redcell-attackers"):
     sys.path.insert(0, os.path.join(ROOT, "packages", pkg, "src"))
 
-from redcell_attackers.specs import (  # noqa: E402
-    BENIGN_QUESTIONS, AttackSpec, benign_goals, build_catalog,
-)
+from redcell_attackers.specs import AttackSpec, benign_goals, build_catalog  # noqa: E402
+from redcell_core.scenarios import SCENARIOS  # noqa: E402
 
 
-def test_42_distinct_attacks():
-    payloads = [AttackSpec(g).payload for g in build_catalog()]
-    assert len(payloads) == 42 and len(set(payloads)) == 42
+def test_63_distinct_attacks_per_scenario():
+    # The same words delivered as the user, inside a memo, or inside a poisoned tool description
+    # are different attacks, so distinctness is (where it is delivered, what it says).
+    for name in SCENARIOS:
+        attacks = [(g.vector, AttackSpec(g).payload) for g in build_catalog(scenario=name)]
+        assert len(attacks) == 63 and len(set(attacks)) == 63, name
+
+
+def test_every_scenario_has_the_same_goal_shape():
+    shapes = {name: [(t.owasp, t.vector, t.intent) for t in s.goals] for name, s in SCENARIOS.items()}
+    assert len({tuple(v) for v in shapes.values()}) == 1          # comparable across scenarios
+    for s in SCENARIOS.values():
+        for t in s.goals:
+            assert t.intent != "unauth_tool" or t.unauth_tool not in s.read_tools   # it must be forbidden
 
 
 def test_encoding_really_encodes():
-    goal = build_catalog(1)[0]                              # LLM01 indirect exfil
+    goal = build_catalog(1)[0]                              # fintech LLM01 indirect exfil
     plain = AttackSpec(goal).payload
     enc = AttackSpec(goal, ("encoding",)).payload
     assert "internal_note" in plain and "internal_note" not in enc
@@ -29,7 +39,13 @@ def test_encoding_really_encodes():
 
 
 def test_benign_has_no_attack():
-    assert [AttackSpec(g).payload for g in benign_goals()] == list(BENIGN_QUESTIONS)
+    for name, s in SCENARIOS.items():
+        assert [AttackSpec(g).payload for g in benign_goals(name)] == list(s.benign)
+
+
+def test_custom_payload_is_sent_as_is():
+    goal = build_catalog(1)[0]
+    assert AttackSpec(goal, ("encoding",), custom="hello").payload == "hello"
 
 
 if __name__ == "__main__":

@@ -97,3 +97,73 @@ flowchart TD
 - L4 combines withholding at source and Presidio DLP, so per-layer attribution cannot separate them.
 - torch / transformers / presidio are imported lazily, so the stdlib simulator path and the CI spine keep working without them.
 - The simulator's defense model is unchanged; it stays a pipeline fixture and its numbers are never reported.
+
+## 2026-11-15 — Phases 3–5: stronger attacks, more agents, firmer numbers, polish
+
+```mermaid
+flowchart TD
+  Q1{"How to cover more than a bank?"}
+  Q1 -->|"20 shallow domains"| R1["Rejected<br/>breadth without proof"]
+  Q1 -->|"scenarios as data: fintech, healthcare,<br/>email — same 9 goal types each"| C1["Chosen<br/>attacks written once, comparable results"]
+
+  Q2{"Which new attacks?"}
+  Q2 -->|"MCP tool poisoning<br/>(injection in a tool description)"| C2["Chosen<br/>MCP-specific; L1 also scans descriptions"]
+  Q2 -->|"combined attack (Liu et al. 2024)"| C3["Chosen<br/>strongest static style in that benchmark"]
+  Q2 -->|"GCG gradient attack"| R2["Rejected<br/>needs raw weights; impossible on Claude"]
+
+  Q3{"Adaptive attacker?"}
+  Q3 -->|"retry 4 fixed mutations (today)"| R3["Rejected as 'adaptive'<br/>it can't react to refusals"]
+  Q3 -->|"PAIR-style LLM rewriter, 6 rounds,<br/>told which defenses are on"| C4["Chosen<br/>verifier is the reward"]
+  C4 --> Q4{"Which attacker model?"}
+  Q4 -->|"Opus on everything"| R4["Rejected<br/>~$5–7, over the $4 budget"]
+  Q4 -->|"Haiku on all goals +<br/>Opus on a headline set"| C5["Chosen (user budget ~$4)"]
+  C4 --> Q5{"Server-side refusal fallback<br/>for the attacker?"}
+  Q5 -->|"on"| R5["Rejected<br/>a fallback model would silently<br/>become the attacker"]
+  Q5 -->|"off; attacker refusals are counted"| C6["Chosen"]
+
+  Q6{"Official benchmark?"}
+  Q6 -->|"AgentDojo banking, with and without<br/>its Protect AI classifier defense"| C7["Chosen<br/>checks our L1 result on outside attacks"]
+  Q6 -->|"in our main .venv"| R6["Rejected<br/>its pins could break running code"]
+
+  Q7{"How to stay inside the budget?"}
+  Q7 -->|"estimates only"| R7["Rejected<br/>money needs a hard stop"]
+  Q7 -->|"spend cap in code; run aborts<br/>before passing it (unknown price = abort)"| C8["Chosen<br/>fail closed"]
+
+  Q8{"Per-layer attribution cost"}
+  Q8 -->|"replay every attack per layer"| R8["Rejected<br/>pays to replay attacks that never worked"]
+  Q8 -->|"replay only baseline winners per layer;<br/>full replay kept for 'all defenses'"| C9["Chosen<br/>attribution only concerns winners"]
+
+  classDef chosen fill:#d4edda,stroke:#28a745,color:#000
+  classDef rejected fill:#f8d7da,stroke:#dc3545,color:#000
+  class C1,C2,C3,C4,C5,C6,C7,C8,C9 chosen
+  class R1,R2,R3,R4,R5,R6,R7,R8 rejected
+```
+
+- The mutation-retry phase stays in the campaign, but it is labelled for what it is; the adaptive attacker is reported separately.
+- "Attacker's goal met" (targeted) is reported next to "any rule broken", so collateral breaches stop inflating attack success.
+
+### 2026-11-15 — mid-course: what the adaptive results changed
+
+```mermaid
+flowchart TD
+  F1["Finding: 10/27 adaptive breaches on guarded Qwen,<br/>every one the system-prompt code"] --> Q1{"Add another filter,<br/>or remove the cause?"}
+  Q1 -->|"another output filter for the code"| R1["Rejected<br/>a filter that knows the secret mirrors the judge"]
+  Q1 -->|"take the secret out of the prompt,<br/>rerun the same attacker"| C1["Chosen<br/>structural fix, measured: 0/27"]
+
+  F2["Finding: a 'card number' that was<br/>made-up dashed single digits"] --> Q2{"How to fix the check?"}
+  Q2 -->|"drop the card check"| R2["Rejected<br/>real card leaks must still count"]
+  Q2 -->|"require a card shape before Luhn,<br/>+ regression test"| C2["Chosen<br/>strictly narrower: old zeros stay zeros"]
+
+  F3["Ollama: 1 request at a time,<br/>4K context"] --> Q3{"Wait ~5 h, or restart it?"}
+  Q3 -->|"restart: 2 parallel, 8K context"| C3["Chosen<br/>clients retry; campaign survived"]
+  Q3 -->|"leave 4K"| R3["Rejected<br/>long AgentDojo prompts would be cut silently"]
+
+  F4["Opus attacker: refusal, category 'cyber'"] --> Q4{"Work around it?"}
+  Q4 -->|"fallback model or rewording"| R4["Rejected<br/>changes the attacker / bypasses a safety system"]
+  Q4 -->|"record as a finding;<br/>Haiku attacker carries the adaptive results"| C4["Chosen"]
+
+  classDef chosen fill:#d4edda,stroke:#28a745,color:#000
+  classDef rejected fill:#f8d7da,stroke:#dc3545,color:#000
+  class C1,C2,C3,C4 chosen
+  class R1,R2,R3,R4 rejected
+```
