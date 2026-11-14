@@ -31,10 +31,10 @@ measure what each guardrail actually buys you.</p>
 | Cost of the full campaign | $0 (683 calls, local) | **$0.21** (815 calls) |
 
 Every number comes from a real model run, with its sample size and 95% confidence interval. An earlier run of the
-same campaign on Qwen gave 81.0%: the same model varies between runs, which is why repeated runs are on the roadmap.
+same campaign on Qwen gave 81.0%: the same model varies between runs, which is why repeated runs come in Phase 4.
 
 > **0% here means "against these known attacks".** Published adaptive attackers, which rewrite their attacks
-> against the defenses, break classifiers like L1. Testing that is the next step, not a solved problem.
+> against the defenses, break classifiers like L1. Testing that is Phase 3; it is not a solved problem.
 
 **What each guard does on its own** (Qwen, share of the 83.3% it blocks):
 
@@ -51,6 +51,16 @@ same campaign on Qwen gave 81.0%: the same model varies between runs, which is w
 <p align="center"><sub>During a run: every attack, the tools the model called, its reply, and the verdict, live.</sub></p>
 
 ---
+
+## Project status
+
+| Phase | What | Status |
+|:--:|:--|:--:|
+| 1 | **Attack real models.** Qwen2.5-7B (local) and Claude Haiku 5.5 behind a real MCP server; 42 attacks from published research; breaches decided by code; a benign control; a live leaderboard with real API cost | ✅ Done |
+| 2 | **Real guardrails, measured.** Injection classifier, datamarking, tool allowlist, withhold + Presidio, render-safe output; for each: attack success, false alarms, useful answers and latency | ✅ Done |
+| 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (TAP / PAIR style, with Claude Opus); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo and InjecAgent suites; healthcare and email/workspace agents as scenario files | Next |
+| 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | Planned |
+| 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | Planned |
 
 ## What it does
 
@@ -136,7 +146,7 @@ sh scripts/serve_board.sh        # → http://127.0.0.1:8766/leaderboard.html?li
 <summary><b>Where the attacks come from</b></summary>
 
 Reimplemented from published templates (`packages/redcell-attackers/src/redcell_attackers/specs.py`). These are
-not the official attack suites; running those is on the roadmap.
+not the official attack suites; running those is part of Phase 3.
 
 | Style | Source |
 |:--|:--|
@@ -159,7 +169,7 @@ leakage 83.3% (n = 6 to 12 each).
 - **Undefended:** each attack is retried with up to 4 mutations until one works.
 - **Defended, frozen replay:** the attacks that worked are replayed unchanged against the defended agent, to isolate the defenses' effect.
 - **Defended, adaptive:** the mutation search runs again against the defenses. Frozen alone overstates safety.
-  Here it retries four fixed mutations; an attacker model that rewrites attacks is the stronger test and is next.
+  Here it retries four fixed mutations; an attacker model that rewrites attacks is the stronger test (Phase 3).
 - **Each layer on its own:** shows what every guard contributes.
 - **Benign control:** 6 normal questions, without and with all guards. Reports false breaches, false alarms, and
   whether answers still contain the facts the tools returned.
@@ -176,16 +186,6 @@ leakage 83.3% (n = 6 to 12 each).
 - **CI gate:** `scripts/run_gate.py` runs on the simulator, so it protects the pipeline logic, not a real model's behaviour.
 - **Not part of any reported number yet:** the LLM-judge agreement study (`redcell-eval`), the LangGraph version of
   the loop (`coordinator.py`), the scope gate in [SCOPE.md](SCOPE.md), and the Next.js dashboard (`apps/dashboard`).
-</details>
-
-<details>
-<summary><b>Roadmap</b></summary>
-
-1. **Stronger attacks:** an adaptive attacker that rewrites failed attacks over many rounds and knows the defenses
-   (TAP / PAIR style, with Claude Opus); MCP tool poisoning; the "combined attack" (Liu et al. 2024); the official
-   AgentDojo and InjecAgent suites.
-2. **More agents:** scenarios as data (healthcare records, email/workspace assistant), so the same attacks run against each.
-3. **Firmer numbers:** repeated runs, and separating "the attacker's goal was met" from "the agent broke a rule some other way".
 </details>
 
 <details>
