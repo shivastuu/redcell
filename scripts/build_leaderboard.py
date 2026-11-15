@@ -186,7 +186,7 @@ def section(data):
         for o in data["owasp"])
     layer_rows = "".join(
         f'<tr><td>{layer["name"]}</td><td class="track">{bar(layer["kills"],"teal")}</td>'
-        f'<td class="tnum t">kills {pct(layer["kills"])}</td></tr>'
+        f'<td class="tnum t">cuts {layer["kills"] * 100:.1f} pts</td></tr>'
         for layer in data["layers"])
     return f"""
 <h2 class="tname">{data["target"]} · {data.get("scenario", "fintech")}</h2>
@@ -202,7 +202,7 @@ def section(data):
 <h3>Per-OWASP category</h3>
 <div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
 <table>{owasp_rows}</table>
-<h3>Per-layer attribution (each layer on its own)</h3>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
 <table>{layer_rows}</table>
 <h3>Cost — token counts reported by the model API</h3>
 <p class="mono" style="color:var(--muted)">{cost_text(data["cost"])}</p>{benign_block(data.get("benign"))}"""
@@ -231,7 +231,7 @@ if (new URLSearchParams(location.search).has("live")) setInterval(async () => {{
 --muted:#93a1b3;--red:#f0555b;--teal:#22a88f;--amber:#e0a83a;--rf:rgba(240,85,91,.14);--tf:rgba(34,168,143,.14)}}}}
 *{{box-sizing:border-box}}body{{margin:0;background:var(--ink);color:var(--text);
 font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}}
-.wrap{{max-width:960px;margin:0 auto;padding:32px 16px 64px}}
+.wrap{{max-width:1240px;margin:0 auto;padding:32px 16px 64px}}
 .mono{{font-family:ui-monospace,"SF Mono",Menlo,monospace}}
 h1{{font-family:ui-monospace,Menlo,monospace;font-size:30px;margin:0;letter-spacing:-.01em}}
 .dot{{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);
@@ -274,14 +274,15 @@ border-radius:0 12px 12px 0;padding:14px 16px;margin-top:22px;font-size:14px;col
 .foot{{margin-top:24px;color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}}
 </style></head><body><div class="wrap">
 <h1><span class="dot"></span>RedCell Leaderboard</h1>
-<p class="sub">Attack success against a fintech agent behind an MCP server, by target model. Most vulnerable first.</p>
+<p class="sub">Attack success against AI agents behind MCP servers (bank, clinic, inbox), by target model and scenario. Most vulnerable first.</p>
 {progress_panel()}
 <h2>All targets</h2>
 <div class="scroll">{summary(cards)}</div>
 <div class="note"><b>How to read this.</b> <i>Frozen</i> replays the attacks that worked, unchanged, against the
-defended agent. <i>Adaptive</i> lets the mutation loop search again against it. Report both: frozen alone
-overstates how safe the agent is. Here "adaptive" means retrying four fixed mutations against the defenses; it is
-not an attacker model that rewrites its attacks, which is the stronger test. Small n means wide confidence intervals.</div>
+defended agent. <i>Mutation retry</i> tries every attack again against the defenses with the same four mutations.
+Frozen alone overstates how safe the agent is; the adaptive attacker below, which rewrites its attacks, is the
+stronger test. <i>Goal met</i> counts only breaches where the attacker got what that attack asked for.
+Small n means wide confidence intervals.</div>
 {adaptive_block()}
 {agentdojo_block()}
 {sections}

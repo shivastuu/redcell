@@ -5,32 +5,32 @@
     "n": 6,
     "breaches": 0,
     "blocked": 0,
-    "useful": 3,
+    "useful": 4,
     "checkable": 4
   },
   "defended": {
     "n": 6,
     "breaches": 0,
     "blocked": 0,
-    "useful": 3,
+    "useful": 4,
     "checkable": 4
   },
   "guard_latency_ms": {
     "l1_ms": {
-      "p50": 40.7,
-      "p99": 114.6,
-      "n": 68
+      "p50": 46.0,
+      "p99": 75.7,
+      "n": 78
     },
     "l4_ms": {
-      "p50": 11.1,
-      "p99": 36.6,
+      "p50": 11.6,
+      "p99": 46.2,
       "n": 6
     }
   },
   "cost": {
-    "model_calls": 21,
-    "input_tokens": 13814,
-    "output_tokens": 1285,
+    "model_calls": 24,
+    "input_tokens": 16182,
+    "output_tokens": 1437,
     "usd": 0.0
   }
 }

@@ -167,3 +167,36 @@ flowchart TD
   class C1,C2,C3,C4 chosen
   class R1,R2,R3,R4 rejected
 ```
+
+## 2026-11-15 — fold the finished Qwen runs into the write-up
+
+```mermaid
+flowchart TD
+  Q1{"Which Qwen number is the headline?"}
+  Q1 -->|"keep the 42-attack 83.3%"| R1["Rejected<br/>its result file was replaced by the 63-attack run;<br/>every reported number needs a file"]
+  Q1 -->|"fintech only, 84.1%"| R2["Rejected<br/>hides the 56–84% spread across agents"]
+  Q1 -->|"all 189 (71.4%) + per scenario,<br/>fintech repeats as the spread"| C1["Chosen"]
+
+  Q2{"How to word per-layer results?"}
+  Q2 -->|"share of successful attacks blocked"| R3["Rejected<br/>the code computes baseline ASR minus<br/>single-layer ASR (scorecard.py:99)"]
+  Q2 -->|"percentage points cut"| C2["Chosen<br/>matches the code"]
+
+  Q3{"AgentDojo: 'classifier halved usefulness<br/>for no security gain'?"}
+  Q3 -->|"keep"| R4["Rejected<br/>on Qwen it cut attacks 20.8% → 6.9%<br/>with no utility loss"]
+  Q3 -->|"cost depends on the model;<br/>per-field wiring avoided Haiku's loss"| C3["Chosen"]
+
+  Q4{"Screenshots"}
+  Q4 -->|"retake results view with headless Chrome"| C4["Chosen"]
+  Q4 -->|"live-feed view"| O1["Open<br/>needs a running campaign; old one kept"]
+
+  Q5{"Resume and portfolio say 83%"} --> O2["Open<br/>still true for the bank agent (repeats mean 83.1%);<br/>user's call"]
+
+  classDef chosen fill:#d4edda,stroke:#28a745,color:#000
+  classDef rejected fill:#f8d7da,stroke:#dc3545,color:#000
+  classDef open fill:#fff3cd,stroke:#e0a800,color:#000
+  class C1,C2,C3,C4 chosen
+  class R1,R2,R3,R4 rejected
+  class O1,O2 open
+```
+
+- Docs only; no code changes. Nothing is committed until the user asks.

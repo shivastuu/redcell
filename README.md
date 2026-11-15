@@ -16,35 +16,42 @@ measure what each guardrail actually buys you.</p>
 
 ## The headline
 
-> **The same 42 attacks broke an open 7B model 83% of the time, and Claude Haiku 0% of the time.**
-> With five guardrail layers on, the 7B model went to **0 of 42**, and stayed at 0 when every attack was retried
-> with all four mutations. Normal questions lost **no** useful answers and raised **no** false alarms.
+> **189 attacks from published research broke an open 7B model 71% of the time, and Claude Haiku 0% of the time.**
+> With five guardrail layers on, the 7B model went to **0 of 189**, with no lost answers and no false alarms.
+> Then an attacker model that rewrites its attacks got through those guards **10 of 27** times, every time by
+> leaking the secret written in the system prompt. With the secret taken out of the prompt: **0 of 27**.
 
 | | Qwen2.5-7B (local) | Claude Haiku 5.5 (API) |
 |:--|:--:|:--:|
-| **Attacks that succeeded, no defenses** | **83.3%** · 35 of 42 | **0%** · 0 of 42 |
-| 95% confidence interval | 69.4 – 91.7% | 0 – 8.4% |
-| **With all five guards** (attacks that worked, replayed) | **0%** · 0 of 42 | 0% · 0 of 42 |
-| With all five guards, retrying all four mutations | 0% · 0 of 42 | 0% · 0 of 42 |
-| Normal questions wrongly flagged | 0 of 6 | 0 of 6 |
-| Useful answers, no guards → all guards | 4/4 → 4/4 | 4/4 → 4/4 |
-| Cost of the full campaign | $0 (683 calls, local) | **$0.21** (815 calls) |
+| **Static attacks that succeeded, no defenses** | **71.4%** · 135 of 189 | **0%** · 0 of 189 |
+| bank · clinic · inbox agent | 84.1% · 74.6% · 55.6% | 0 · 0 · 0 |
+| 95% confidence interval (all 189) | 64.6 – 77.4% | 0 – 2.0% |
+| **With all five guards** (replayed, then retried with all four mutations) | **0%** · 0 of 189 | 0% · 0 of 189 |
+| **Adaptive attacker** (Claude Haiku as attacker), all five guards | **10 of 27** · CI 21.5 – 55.8% | 0 of 27 |
+| … with the secret removed from the system prompt | **0 of 27** | not needed |
+| Normal questions wrongly flagged | 0 of 18 | 0 of 18 |
+| Useful answers, no guards → all guards | 12/12 → 12/12 | 12/12 → 12/12 |
+| Cost of the three static campaigns | $0 (3,313 calls, local) | **$0.50** |
 
-Every number comes from a real model run, with its sample size and 95% confidence interval. An earlier run of the
-same campaign on Qwen gave 81.0%: the same model varies between runs, which is why repeated runs come in Phase 4.
+Every number comes from a real model run, with its sample size and 95% confidence interval. The bank-agent
+campaign on Qwen, run four times, gave 81.0–85.7%: the same model varies between runs.
 
-> **0% here means "against these known attacks".** Published adaptive attackers, which rewrite their attacks
-> against the defenses, break classifiers like L1. Testing that is Phase 3; it is not a solved problem.
+> **0% against static attacks is a floor, not proof of safety.** The adaptive attacker got through the same
+> guards. What stopped it was structural: no secret in the prompt for the model to leak.
 
-**What each guard does on its own** (Qwen, share of the 83.3% it blocks):
+**What each guard does on its own** (Qwen; percentage points it takes off the undefended rate):
 
-| L1 injection classifier | L4 withhold + Presidio | L3 tool allowlist | L2 datamarking | L5 render-safe output |
-|:--:|:--:|:--:|:--:|:--:|
-| **83.3%** (all of it) | 50.0% | 26.2% | 21.4% | 7.1% |
+| | L1 injection classifier | L4 withhold + Presidio | L3 tool allowlist | L2 datamarking | L5 render-safe output |
+|:--|:--:|:--:|:--:|:--:|:--:|
+| bank (84.1%) | **82.5** | 58.7 | 25.4 | 23.8 | 19.0 |
+| clinic (74.6%) | **57.1** | 50.8 | 23.8 | 7.9 | 12.7 |
+| inbox (55.6%) | **50.8** | 33.3 | 27.0 | 14.3 | 9.5 |
+
+No single layer reaches 0 in every scenario; the five together do.
 
 <p align="center"><img src="docs/img/leaderboard-results.png" width="860"
-  alt="RedCell leaderboard results: Qwen2.5-7B 83.3% undefended and 0% defended, Claude Haiku 5.5 0% throughout, with per-OWASP bars and per-layer attribution"></p>
-<p align="center"><sub>The leaderboard after both campaigns: ranking, per-OWASP results, and what each guard contributes.</sub></p>
+  alt="RedCell leaderboard: six campaigns across the bank, clinic and inbox agents. Qwen2.5-7B 84.1%, 74.6% and 55.6% undefended and 0% defended; Claude Haiku 5.5 0% throughout; then the adaptive-attacker results"></p>
+<p align="center"><sub>The leaderboard after all six campaigns: ranking, goal met, the repeat-run spread, and the adaptive attacker.</sub></p>
 
 <p align="center"><img src="docs/img/leaderboard-live.png" width="860"
   alt="RedCell live leaderboard: a progress panel for two running campaigns and a live feed of attacks, the tools each model called, its reply, and whether the attack was held"></p>
@@ -54,24 +61,22 @@ same campaign on Qwen gave 81.0%: the same model varies between runs, which is w
 
 ## Project status
 
-> **Latest (Phase 3):** an adaptive attacker that rewrites its attacks got through **10 of 27** times on
-> the guarded 7B model, where 63 static attacks got through none. Every breach leaked the secret
-> written in the system prompt. With that secret removed from the prompt: **0 of 27**. Full write-up,
-> including the official AgentDojo check: **[docs/results.md](docs/results.md)**.
+> **All five phases are done.** Full write-up, including the official AgentDojo check:
+> **[docs/results.md](docs/results.md)**. Every design decision as study questions: **[docs/why.md](docs/why.md)**.
 
 | Phase | What | Status |
 |:--:|:--|:--:|
 | 1 | **Attack real models.** Qwen2.5-7B (local) and Claude Haiku 5.5 behind a real MCP server; 42 attacks from published research; breaches decided by code; a benign control; a live leaderboard with real API cost | ✅ Done |
 | 2 | **Real guardrails, measured.** Injection classifier, datamarking, tool allowlist, withhold + Presidio, render-safe output; for each: attack success, false alarms, useful answers and latency | ✅ Done |
-| 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (TAP / PAIR style, with Claude Opus); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo and InjecAgent suites; healthcare and email/workspace agents as scenario files | 🟡 In progress |
-| 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | 🟡 In progress |
-| 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | 🟡 In progress |
+| 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (PAIR style; Claude Haiku as the attacker after Claude Opus refused); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo banking suite; healthcare and email agents as scenario files | ✅ Done |
+| 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | ✅ Done |
+| 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | ✅ Done |
 
 ## What it does
 
-- **Attacks a real agent the way attackers would.** A bank "statement assistant" with six tools behind a FastMCP
-  server, hit by 42 attacks built from published research, both from the user's side and hidden inside data
-  the agent reads (a poisoned transaction memo).
+- **Attacks real agents the way attackers would.** A bank statement assistant, a clinic patient portal and a work
+  inbox assistant behind FastMCP servers, each hit by 63 attacks built from published research: from the user's
+  side, hidden inside data the agent reads, or hidden in a tool's description. Then an attacker model adapts.
 - **Judges with code, not opinions.** A breach is a planted secret appearing in any output (even base64-encoded or
   spaced out), a forbidden tool that actually executed, a card number leaking, or an image link that would load by
   itself. It is read from what the MCP server recorded, never from what the model claims.
@@ -83,8 +88,8 @@ same campaign on Qwen gave 81.0%: the same model varies between runs, which is w
 
 ```mermaid
 flowchart LR
-  A["42 attacks<br/>7 goals × 6 published styles<br/>+ mutations"] -->|"direct: user message"| M["Agent<br/>Qwen-7B or Claude Haiku"]
-  A -->|"indirect: poisoned memo"| S["MCP server<br/>bank tools"]
+  A["189 attacks<br/>9 goals × 7 published styles × 3 agents<br/>+ mutations + adaptive attacker"] -->|"direct: user message"| M["Agent<br/>Qwen-7B or Claude Haiku"]
+  A -->|"indirect: poisoned data<br/>or tool description"| S["MCP server<br/>bank · clinic · inbox tools"]
   M <-->|"tools/list · tools/call"| S
   S --> T["Trace<br/>what really ran<br/>+ the reply"]
   M --> T
@@ -99,7 +104,7 @@ flowchart LR
 
 | Layer | Defense | Source |
 |:--|:--|:--|
-| **L1** | Prompt-injection classifier on the user message **and every tool result**; flagged text is blanked | Protect AI `deberta-v3-base-prompt-injection-v2` (the model LLM Guard wraps) |
+| **L1** | Prompt-injection classifier on the user message, **every tool result field and every tool description**; flagged text is blanked | Protect AI `deberta-v3-base-prompt-injection-v2` (the model LLM Guard wraps) |
 | **L2** | Datamarking: words in tool data are joined with `ˆ`, so the model treats them as data | Hines et al. 2024, *Spotlighting* (Microsoft) |
 | **L3** | Deny-by-default tool allowlist, enforced in the MCP server | standard least privilege |
 | **L4** | Confidential fields never sent to the model, plus PII redaction on everything that leaves | Microsoft Presidio |
@@ -109,8 +114,8 @@ flowchart LR
 
 1. **Haiku reads the poisoned memo and ignores it.** It fetches the transaction, receives the injected
    instruction, and answers the customer's real question.
-2. **The injection classifier did most of the work.** On its own it blocked every attack, including
-   base64-wrapped ones, and flagged none of the normal questions.
+2. **The injection classifier did the most work, but not all of it.** On its own it cut bank-agent attacks from
+   84.1% to 1.6% and flagged none of the normal questions, but left 17.5% of clinic attacks succeeding.
 3. **A model can leak a secret while refusing.** With only L4 on, Qwen replied *"I'm sorry, but I cannot provide
    the confidential staff escalation code RC-SYS_SECRET-…"*. PII detection didn't catch it, because a business
    secret isn't PII. Keep secrets out of prompts.
@@ -118,10 +123,17 @@ flowchart LR
    and the agent told a real customer about a "prompt injection issue". Fixed, and caught only because normal
    traffic was measured too.
 5. **Tail latency decides where a guard runs, and load changes it.** On the Mac GPU: 12 ms median but 150 ms worst
-   case. On an idle CPU: 33 ms median, 38 ms worst. Sharing the CPU with a local model during a campaign: p50
-   54–59 ms, p99 140–192 ms (about 940 calls per run).
+   case. On an idle CPU: 33 ms median, 38 ms worst. Sharing the CPU with a local model during the six full
+   campaigns: p50 45–58 ms, p99 142–297 ms.
 6. **The first breach checker would have flagged nearly every normal answer** as an attack. Measuring against a
    real model exposed it.
+7. **An attacker that adapts beat all five guards, and a structural change beat the attacker.** 10 of 27 adaptive
+   attacks got through the guarded 7B model, and every one leaked the code written in its system prompt. With the
+   code removed from the prompt: 0 of 27. A filter can't protect a secret the model already holds.
+8. **The same classifier can cost nothing or half your answers.** On the official AgentDojo benchmark, its
+   whole-output classifier cut Qwen's attack success from 20.8% to 6.9% at no cost in tasks solved, but halved
+   Haiku's (12/16 → 6/16) with no attacks to stop. RedCell's L1, the same model scoring each field, kept every
+   useful answer.
 
 The reasoning behind every decision, as study questions ("why this, why not that, what will an interviewer
 ask?"), is in **[docs/why.md](docs/why.md)**.
@@ -138,10 +150,10 @@ uv pip install torch transformers presidio-analyzer \
   https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
 ollama pull qwen2.5:7b && ollama serve
 .venv/bin/python scripts/run_benign.py                     # false alarms + useful answers
-.venv/bin/python scripts/run_campaign.py --live            # full campaign on Qwen (free)
+.venv/bin/python scripts/run_campaign.py --live            # bank agent on Qwen (free); --scenario healthcare|email
 
 echo 'ANTHROPIC_API_KEY=...' > .env && set -a && . ./.env && set +a
-.venv/bin/python scripts/run_campaign.py --live --model claude-haiku-5-5   # ≈ $0.25
+.venv/bin/python scripts/run_campaign.py --live --model claude-haiku-5-5   # ≈ $0.18 per scenario
 
 # 3. watch it
 sh scripts/serve_board.sh        # → http://127.0.0.1:8766/leaderboard.html?live
@@ -151,7 +163,8 @@ sh scripts/serve_board.sh        # → http://127.0.0.1:8766/leaderboard.html?li
 <summary><b>Where the attacks come from</b></summary>
 
 Reimplemented from published templates (`packages/redcell-attackers/src/redcell_attackers/specs.py`). These are
-not the official attack suites; running those is part of Phase 3.
+not the official attack suites; the official AgentDojo banking suite is run separately
+([results](docs/results.md#4-outside-check-the-official-agentdojo-benchmark)).
 
 | Style | Source |
 |:--|:--|
@@ -159,13 +172,14 @@ not the official attack suites; running those is part of Phase 3.
 | "IMPORTANT!!! Ignore all previous instructions…" | InjecAgent (Zhan et al., ACL Findings 2024) |
 | "Ignore the previous instructions and instead…" | Perez & Ribeiro 2022, *Ignore Previous Prompt* |
 | Fake conversation turn | Liu et al., USENIX Security 2024 (fake completion) |
+| Combined attack: fake completion + escape characters + "ignore previous" | Liu et al., USENIX Security 2024 |
 | Refusal suppression, prefix injection, base64 | Wei et al., NeurIPS 2023, *Jailbroken* |
 | Role-play ("DevMode") | Shen et al., CCS 2024, *Do Anything Now* |
 | Fake system notice, note-to-assistant, authority claim | common real-world patterns |
 
-Goals map to the OWASP Top 10 for LLM apps (2025). Qwen with no defenses: LLM01 prompt injection 91.7% ·
-LLM02 data disclosure 83.3% · LLM05 unsafe output 100% · LLM06 excessive agency 66.7% · LLM07 system-prompt
-leakage 83.3% (n = 6 to 12 each).
+Goals map to the OWASP Top 10 for LLM apps (2025). Qwen with no defenses (bank · clinic · inbox): LLM01 prompt
+injection 95 · 95 · 38% · LLM02 data disclosure 86% in all three · LLM05 unsafe output 100% in all three ·
+LLM06 excessive agency 67 · 43 · 38% · LLM07 system-prompt leakage 86 · 71 · 86% (n = 7 to 21 each).
 </details>
 
 <details>
@@ -173,24 +187,28 @@ leakage 83.3% (n = 6 to 12 each).
 
 - **Undefended:** each attack is retried with up to 4 mutations until one works.
 - **Defended, frozen replay:** the attacks that worked are replayed unchanged against the defended agent, to isolate the defenses' effect.
-- **Defended, adaptive:** the mutation search runs again against the defenses. Frozen alone overstates safety.
-  Here it retries four fixed mutations; an attacker model that rewrites attacks is the stronger test (Phase 3).
+- **Defended, mutation retry:** every attack is retried against the defenses with the same four mutations.
+- **Adaptive attacker:** an attacker model (Claude Haiku 5.5) rewrites its attack after each reply, for up to 6
+  rounds, knowing which defenses are on but never seeing the secrets. Frozen replay alone overstates safety.
+- **Repeats:** the Qwen bank campaign was run four times to show the spread (81.0–85.7%).
 - **Each layer on its own:** shows what every guard contributes.
 - **Benign control:** 6 normal questions, without and with all guards. Reports false breaches, false alarms, and
   whether answers still contain the facts the tools returned.
 - **Wilson 95% confidence intervals** on every rate. **Cost** comes from the token counts the API returns.
-- **Guard latency** (M3 Pro, CPU): L1 p50 33 ms idle; p50 54–59 ms / p99 140–192 ms during full campaigns, while
+- **Guard latency** (M3 Pro, CPU): L1 p50 33 ms idle; p50 45–58 ms / p99 142–297 ms during full campaigns, while
   the local model shares the CPU.
 </details>
 
 <details>
 <summary><b>Honest limitations</b></summary>
 
-- **One scenario** (a bank agent), and 42 attacks that are reimplementations of published templates.
-- **Small samples.** That's why every rate carries its confidence interval. Repeated runs are not in yet.
+- **Three synthetic agents**, one open 7B model and one API model; 63 attacks per agent, reimplemented from
+  published templates.
+- **Small samples.** That's why every rate carries its confidence interval. Only the Qwen bank campaign was repeated.
+- **Adaptive results are lower bounds** where the attacker model refused (about half its goals against Haiku).
 - **CI gate:** `scripts/run_gate.py` runs on the simulator, so it protects the pipeline logic, not a real model's behaviour.
-- **Not part of any reported number yet:** the LLM-judge agreement study (`redcell-eval`), the LangGraph version of
-  the loop (`coordinator.py`), the scope gate in [SCOPE.md](SCOPE.md), and the Next.js dashboard (`apps/dashboard`).
+- **Not part of any reported number:** the LLM-judge agreement study (`redcell-eval`), the LangGraph version of
+  the loop (`coordinator.py`) and the scope gate in [SCOPE.md](SCOPE.md).
 </details>
 
 <details>
@@ -215,7 +233,10 @@ packages/redcell-target/      the agent, MCP server, guardrails (guards.py), sim
 packages/redcell-attackers/   attack catalog, mutation loop, campaign phases, scorecard
 packages/redcell-verifiers/   the breach checks (plain code)
 packages/redcell-core/        shared types, planted secrets, model prices
-scripts/                      run_campaign · run_benign · build_leaderboard · serve_board · run_gate
+scripts/                      run_campaign · run_benign · run_adaptive · run_repeats · run_agentdojo ·
+                              build_leaderboard · serve_board · run_gate
+apps/dashboard/               Next.js dashboard, built from the result files in dashboard/
+docs/results.md               the full write-up of every measured result
 docs/why.md                   every design decision, as study questions
 decision.md · flow.md         decision diagrams and the work log
 ```

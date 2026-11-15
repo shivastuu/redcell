@@ -70,3 +70,22 @@ flowchart TD
   L --> M["Ollama restarted: 2 parallel, 8K context"]
   M --> N["Committed locally; Qwen campaigns,<br/>repeats and AgentDojo-Qwen still running"]
 ```
+
+## 2026-11-15 — fold the finished Qwen runs into the write-up
+
+```mermaid
+flowchart TD
+  A["decision.md: headline = all 189 + per agent;<br/>per-layer results in points"] --> B["Read result files: scorecards,<br/>repeats, AgentDojo, benign"]
+  B --> C{"Every rate matches its counts?"}
+  C -->|"no: goal-met rate was the any-breach rate<br/>(84.1% next to 46/63)"| D["scorecard._ci: rate = k/n<br/>+ regression test"]
+  D --> E{"Test fails on old code,<br/>passes on new?"}
+  E -->|"yes; all 9 test files pass"| F["Stored files corrected from their counts<br/>(3 Qwen scorecards + scorecard.json)"]
+  F --> G["docs/results.md rewritten;<br/>why.md updated + Q48; README"]
+  G --> H["Leaderboard: 'cuts X pts', subtitle,<br/>reading note, wider layout; rebuilt"]
+  H --> I{"Screenshot (headless Chrome)"}
+  I -->|"cost column clipped: widened, retaken"| J["docs/img/leaderboard-results.png"]
+  J --> K["Next.js dashboard: 'cuts X pts' label"]
+  K --> L{"npm run build"}
+  L -->|"exported; new numbers in out/index.html"| M["Study page v3: 48 questions;<br/>node --check OK"]
+  M --> N["Not committed: waiting for the user"]
+```

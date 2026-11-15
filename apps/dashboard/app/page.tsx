@@ -43,13 +43,13 @@ function Section({ c }: { c: Card }) {
         ))}
       </tbody></table>
 
-      <h3>What each guard blocks on its own</h3>
+      <h3>Each guard on its own: percentage points it cuts from the undefended rate</h3>
       <table><tbody>
         {c.layers.map((l) => (
           <tr key={l.name}>
             <td>{l.name}</td>
             <td className="track"><Bar frac={l.kills} cls="teal" /></td>
-            <td className="tnum t">blocks {pct(l.kills)}</td>
+            <td className="tnum t">cuts {(l.kills * 100).toFixed(1)} pts</td>
           </tr>
         ))}
       </tbody></table>

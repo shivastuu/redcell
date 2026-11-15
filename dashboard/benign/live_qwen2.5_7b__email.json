@@ -17,20 +17,20 @@
   },
   "guard_latency_ms": {
     "l1_ms": {
-      "p50": 38.9,
-      "p99": 69.4,
+      "p50": 38.3,
+      "p99": 87.3,
       "n": 104
     },
     "l4_ms": {
-      "p50": 14.5,
-      "p99": 81.5,
+      "p50": 16.3,
+      "p99": 45.2,
       "n": 6
     }
   },
   "cost": {
     "model_calls": 24,
-    "input_tokens": 15023,
-    "output_tokens": 1859,
+    "input_tokens": 15022,
+    "output_tokens": 1660,
     "usd": 0.0
   }
 }

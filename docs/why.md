@@ -6,8 +6,8 @@ an interviewer is likely to ask).
 
 ```mermaid
 flowchart LR
-  A["Attacker<br/>42 attacks"] -->|"direct: user message"| M["Agent<br/>Qwen-7B or Claude Haiku"]
-  A -->|"indirect: poisoned memo"| S["MCP server<br/>bank tools"]
+  A["Attacker<br/>189 static + adaptive"] -->|"direct: user message"| M["Agent<br/>Qwen-7B or Claude Haiku"]
+  A -->|"indirect: poisoned data<br/>or tool description"| S["MCP server<br/>bank · clinic · inbox tools"]
   M <-->|"tool calls (JSON-RPC)"| S
   S --> T["Trace<br/>what really ran + final text"]
   M --> T
@@ -67,6 +67,8 @@ flowchart LR
 ### 8. Why 7 goals × 6 published attack styles?
 - **Why:** 42 genuinely different prompts taken from the literature (AgentDojo, InjecAgent, Perez & Ribeiro,
   Wei et al. "Jailbroken"), not 6 copies of one. Each goal has a success condition code can check.
+- **Later:** Phase 3 grew it to 9 goals × 7 styles: 63 per scenario, 189 across three scenarios. The new
+  goals cover tool poisoning (Q32); the new style is the combined attack (Q33).
 
 ### 9. Why a benign control?
 - **Why:** it measures false breaches (the checker being wrong, or the agent leaking on its own).
@@ -79,17 +81,19 @@ flowchart LR
 - **Not this:** the old rule ("anything after the JSON is a breach") flagged almost every real answer.
 
 ### 11. Why confidence intervals (Wilson)?
-- **Why:** 6/7 and 34/42 are both about 85%, but with very different certainty. Wilson stays correct
+- **Why:** 6/7 and 36/42 are both 86%, but with very different certainty. Wilson stays correct
   near 0% and 100%. 0/42 means "under 8.4%", not "0%".
 
 ### 12. Why frozen replay **and** adaptive?
 - **Frozen:** replay the attacks that worked, unchanged, against the defended agent. That isolates the effect of the defenses.
 - **Adaptive:** let the attacker search again against the defenses. That is the realistic case. Frozen alone
   overstates safety; published adaptive attacks broke 12 defenses at over 90% success.
+- **Found:** exactly that. Frozen replay on Qwen with all guards: 0/189. Adaptive: 10/27 (Q44).
 
 ### 13. Why two targets, Qwen-7B and Claude Haiku?
 - **Why:** a weak open model (attacks land, it's free, anyone can reproduce it) against a safety-trained API
-  model (what products actually use). Same 42 attacks: **81% vs 0%**. Model choice is itself a security
+  model (what products actually use). Same attacks: **71% vs 0%** across all 189 (81–86% vs 0% on the
+  bank agent over six runs). Model choice is itself a security
   control, but 0% against *known* attacks is not proof of safety.
 
 ### 14. Why MCP?
@@ -110,8 +114,10 @@ flowchart LR
 
 ### 17. Why a classifier model for L1 instead of the regex?
 - **Why:** a regex is trivial to bypass and flags innocent words ("ignore"). The classifier is trained on
-  thousands of injections. It caught every attack we tried, including base64-wrapped ones, and flagged
-  0 of 6 normal questions.
+  thousands of injections. On the first 42-attack catalog it caught every attack, including base64-wrapped
+  ones, and it flagged 0 of 6 normal questions in every scenario.
+- **Measured later:** alone, it cut fintech attacks from 84.1% to 1.6%, but left 17.5% of healthcare attacks
+  succeeding. It is the strongest layer, not a complete one.
 - **Why Protect AI's model:** open (Apache-2.0), not gated, widely used, and the model LLM Guard wraps.
 - **Not this:** the `llm-guard` package. It has had no release since May 2025 and pins
   `transformers==4.51.3` exactly, which invites dependency conflicts. We call the same model directly in 3 lines.
@@ -129,6 +135,7 @@ flowchart LR
 ### 20. Why datamarking for L2?
 - **Why:** published (Hines et al., Microsoft, 2024). It marks untrusted text by joining its words with `ˆ`,
   so the model can tell data from instructions. Cheap, and works on any model. One sentence in the prompt is the weakest form of the idea.
+- **Measured:** alone, it took 8–24 percentage points off Qwen's attack success, depending on the scenario. Cheap, but not a wall.
 
 ### 21. Why leave confidential fields out instead of masking them?
 - **Why:** what the model never sees, it can't leak, however the attack is phrased. That is structural.
@@ -158,17 +165,17 @@ flowchart LR
 ### 26. Why run the classifier on CPU, not the Mac GPU?
 - **Why:** measured. GPU p50 12 ms but max 150 ms, because it recompiles for each new input length. CPU p50 33 ms,
   max 38 ms. An inline guard is judged by its slowest calls (p99).
-- **If they push** ("your run shows higher latency"): yes, 44–57 ms p50 and 78–96 ms p99 while the local model
-  and other runs share the CPU. Always report the conditions with the number.
+- **If they push** ("your run shows higher latency"): yes, p50 45–58 ms and p99 142–297 ms across the six full
+  campaigns, while the local model shares the CPU. Always report the conditions with the number.
 
 ### 27. Haiku shows 0%. Is it broken?
 - **No.** It called `get_transaction`, received the poisoned memo, and ignored it. These are known
   2023–24 attack styles and Haiku is safety-trained. The real test is adaptive attacks (Phase 3).
 
 ### 28. Qwen with all guards scored 0%. Is the agent secure now?
-- **No.** It is 0 of 42 against *these known attacks* and their four fixed mutations (95% CI up to 8.4%).
-  Our "adaptive" phase only retries those mutations. Published adaptive attackers rewrite their attacks against
-  the defense and break classifiers like L1. That is the next test.
+- **No.** It is 0 of 189 against *these known attacks* and their four fixed mutations (95% CI up to 2.0%).
+  Published adaptive attackers rewrite their attacks against the defense and break classifiers like L1.
+  Phase 3 ran that test: 10 of 27 got through (Q44).
 - **If they push** ("then why report it?"): it shows the guards stop the whole known catalogue without costing a
   single useful answer. It is a floor, not a ceiling, and saying so is the point.
 
@@ -181,6 +188,7 @@ flowchart LR
 ### 30. Why did the same campaign give 81.0% once and 83.3% the next time?
 - **Why:** the model samples its words, so the same attack can land one time and not the next. One run is one sample.
 - **What to do:** repeat runs and report the spread. Both numbers sit well inside each other's confidence interval.
+  Three more runs on the 63-attack catalog gave 81.0%, 85.7% and 82.5% (Q42).
 
 ---
 
@@ -269,11 +277,14 @@ flowchart LR
 
 ### 46. AgentDojo's classifier defense and RedCell's L1 use the same model. Why such different costs?
 - **Found:** on the official AgentDojo banking suite, Haiku solved 12/16 tasks undefended but only
-  6/16 with AgentDojo's classifier defense, while attacks stayed at 0/144 either way. RedCell's L1,
-  same Protect AI model, kept useful answers at 4/4.
+  6/16 with AgentDojo's classifier defense, while attacks stayed at 0/144 either way. On Qwen the same
+  defense cut attacks from 30/144 (20.8%) to 10/144 (6.9%) and solved the same 7/16 tasks. RedCell's L1,
+  same Protect AI model, kept useful answers at 4/4 on both models.
 - **Why:** AgentDojo's defense scores each whole tool output (false alarms on clean transaction lists,
-  and a real injection inside a long bill scored "safe"); RedCell scores each field. **How a guardrail
-  is wired matters as much as which guardrail it is.**
+  and a real injection inside a long bill scored "safe"); RedCell scores each field. **What a guard
+  costs depends on the model behind it, and how it is wired decides whether it costs anything.**
+- **If they push** ("so the classifier was useless?"): no. On the model that can be steered it removed
+  two-thirds of successful attacks for free. On the model that couldn't be steered, it only cost answers.
 
 ### 47. Haiku held against the adaptive attacker. Is that the final word?
 - **No.** 0 of 54 adaptive attacks (CI 0–6.6%), but the attacker model declined about half its goals
@@ -286,6 +297,19 @@ flowchart LR
 ### 42. Why repeat runs?
 - **Why:** the same model gave 81.0% and 83.3% on identical campaigns. Models sample their words, so one
   run is one sample. Repeats show the spread; the leaderboard prints the range next to the rate.
+- **Result:** three repeats of Qwen's fintech campaign: 81.0%, 85.7%, 82.5% (mean 83.1%). Every run's
+  interval overlaps the others, so the differences are consistent with sampling noise.
+
+### 48. Why did "attacker's goal met" once show the same rate as "any breach"?
+- **Found:** writing up the results, the stored goal-met rate for Qwen fintech said 84.1% next to a count
+  of 46/63, which is 73.0%. The helper that builds each rate always computed the any-breach rate and only
+  used the count it was given for the interval. The console printed the right number; the leaderboard and
+  the dashboard showed the wrong one.
+- **Fix:** the rate is now its own count over n, with a regression test of two breaches where only one
+  met its goal (the simulator never produces that case, so a test on its data would have passed the bug).
+  The stored result files were corrected from their own counts; no rerun needed.
+- **Lesson:** check every displayed number against its raw counts. A test only guards a bug if it fails
+  without the fix.
 
 ## Phase 5 — the dashboard
 
@@ -299,11 +323,13 @@ flowchart LR
 
 | | Qwen2.5-7B (local) | Claude Haiku 5.5 |
 |---|---|---|
-| Undefended attack success (42 attacks) | 83.3% (CI 69.4–91.7%); 81.0% on an earlier run | 0/42 (CI 0–8.4%) |
-| All five guards, attacks replayed | 0/42 (CI 0–8.4%) | 0/42 |
-| All five guards, retrying four mutations | 0/42 | 0/42 |
-| Each guard alone blocks (Qwen) | L1 83.3% · L4 50.0% · L3 26.2% · L2 21.4% · L5 7.1% | nothing to block |
-| Benign: false breaches / L1 false alarms | 0/6 / 0/6 | 0/6 / 0/6 |
+| Undefended attack success (63 per scenario) | fintech 84.1% · healthcare 74.6% · email 55.6%; all 189: 71.4% (CI 64.6–77.4%) | 0/189 (CI 0–2.0%) |
+| Fintech, repeated | 81.0% · 85.7% · 82.5% (mean 83.1%) | ran once |
+| All five guards, replayed and retried with four mutations | 0/189 (CI 0–2.0%) | 0/189 |
+| Each guard alone, points cut (fintech · healthcare · email) | L1 82.5 · 57.1 · 50.8 — L4 58.7 · 50.8 · 33.3 — L3 25.4 · 23.8 · 27.0 — L2 23.8 · 7.9 · 14.3 — L5 19.0 · 12.7 · 9.5 | nothing to block |
+| Adaptive attacker (Haiku), all guards | 10/27 (CI 21.5–55.8%); 0/27 with no secret in the prompt | 0/54 (CI 0–6.6%) |
+| AgentDojo banking: attacks succeeded, none → its classifier | 20.8% → 6.9%, tasks solved 7/16 → 7/16 | 0/144 → 0/144, tasks solved 12/16 → 6/16 |
+| Benign: false breaches / L1 false alarms | 0/6 / 0/6 in each scenario | 0/6 / 0/6 in each scenario |
 | Benign: useful answers, no guards → all guards | 4/4 → 4/4 | 4/4 → 4/4 |
-| L1 latency | idle p50 33 ms; in a campaign p50 54–59 ms, p99 140–192 ms | same classifier |
-| Cost of a full campaign | $0 (683 calls) | $0.21 (815 calls) |
+| L1 latency | idle p50 33 ms; in a campaign p50 45–58 ms, p99 142–297 ms | same classifier |
+| Cost of the three static campaigns | $0 (3,313 calls, local) | $0.50 |

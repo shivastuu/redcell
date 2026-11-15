@@ -74,7 +74,7 @@ def _ci(attempts: list[Attempt], hit=lambda a: a.breached) -> dict:
     n = len(attempts)
     k = sum(bool(hit(a)) for a in attempts)
     lo, hi = wilson_ci(k, n)
-    return {"asr": asr(attempts), "lo": lo, "hi": hi, "k": k, "n": n}
+    return {"asr": k / n if n else 0.0, "lo": lo, "hi": hi, "k": k, "n": n}
 
 
 def report_dict(baseline, defended, adaptive_, layers: list[tuple[str, list]],

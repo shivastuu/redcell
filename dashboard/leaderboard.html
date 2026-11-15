@@ -19,12 +19,12 @@ if (new URLSearchParams(location.search).has("live")) setInterval(async () => {
 --muted:#93a1b3;--red:#f0555b;--teal:#22a88f;--amber:#e0a83a;--rf:rgba(240,85,91,.14);--tf:rgba(34,168,143,.14)}}
 *{box-sizing:border-box}body{margin:0;background:var(--ink);color:var(--text);
 font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:960px;margin:0 auto;padding:32px 16px 64px}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 16px 64px}
 .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
 h1{font-family:ui-monospace,Menlo,monospace;font-size:30px;margin:0;letter-spacing:-.01em}
 .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--red);
 box-shadow:0 0 0 4px var(--rf);margin-right:9px;vertical-align:middle}
-.sub{color:var(--muted);margin:6px 0 0}
+.sub{color:var(--muted);margin:6px 0 0}.sub2{color:var(--muted);font-size:11px}
 .tags{margin-top:6px;font-family:ui-monospace,monospace;font-size:12px;color:var(--muted)}
 .hero{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0}
 .kpi{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
@@ -62,60 +62,167 @@ border-radius:0 12px 12px 0;padding:14px 16px;margin-top:22px;font-size:14px;col
 .foot{margin-top:24px;color:var(--muted);font-family:ui-monospace,monospace;font-size:12px}
 </style></head><body><div class="wrap">
 <h1><span class="dot"></span>RedCell Leaderboard</h1>
-<p class="sub">Attack success against a fintech agent behind an MCP server, by target model. Most vulnerable first.</p>
+<p class="sub">Attack success against AI agents behind MCP servers (bank, clinic, inbox), by target model and scenario. Most vulnerable first.</p>
 
 <h2>All targets</h2>
-<div class="scroll"><table><tr><th class="l">target</th><th>attacks</th><th>undefended</th><th>defended · frozen</th><th>defended · adaptive</th><th>useful answers · defended</th><th>cost</th></tr><tr><td class="cat">live:qwen2.5:7b</td><td class="tnum">42</td><td class="tnum r">83.3%</td><td class="tnum t">0.0%</td><td class="tnum a">0.0%</td><td class="tnum">4/4</td><td class="tnum">$0.0</td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td class="tnum">42</td><td class="tnum r">0.0%</td><td class="tnum t">0.0%</td><td class="tnum a">0.0%</td><td class="tnum">4/4</td><td class="tnum">$0.2144</td></tr></table></div>
+<div class="scroll"><table><tr><th class="l">target</th><th class="l">scenario</th><th>attacks</th><th>undefended</th><th>goal met</th><th>defended · frozen</th><th>defended · mutation retry</th><th>useful answers · defended</th><th>cost</th></tr><tr><td class="cat">live:qwen2.5:7b</td><td>fintech</td><td class="tnum">63</td><td class="tnum r">84.1% <span class="sub2">· 3 runs 81.0%–85.7%</span></td><td class="tnum r">73.0%</td><td class="tnum t">0.0%</td><td class="tnum a">0.0%</td><td class="tnum">4/4</td><td class="tnum">$0.0</td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>healthcare</td><td class="tnum">63</td><td class="tnum r">74.6%</td><td class="tnum r">68.3%</td><td class="tnum t">0.0%</td><td class="tnum a">0.0%</td><td class="tnum">4/4</td><td class="tnum">$0.0</td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>email</td><td class="tnum">63</td><td class="tnum r">55.6%</td><td class="tnum r">49.2%</td><td class="tnum t">0.0%</td><td class="tnum a">0.0%</td><td class="tnum">4/4</td><td class="tnum">$0.0</td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>email</td><td class="tnum">63</td><td class="tnum r">0.0%</td><td class="tnum r">0.0%</td><td class="tnum t">0.0%</td><td class="tnum a">-</td><td class="tnum">4/4</td><td class="tnum">$0.1721</td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>fintech</td><td class="tnum">63</td><td class="tnum r">0.0%</td><td class="tnum r">0.0%</td><td class="tnum t">0.0%</td><td class="tnum a">-</td><td class="tnum">4/4</td><td class="tnum">$0.1822</td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>healthcare</td><td class="tnum">63</td><td class="tnum r">0.0%</td><td class="tnum r">0.0%</td><td class="tnum t">0.0%</td><td class="tnum a">-</td><td class="tnum">4/4</td><td class="tnum">$0.1524</td></tr></table></div>
 <div class="note"><b>How to read this.</b> <i>Frozen</i> replays the attacks that worked, unchanged, against the
-defended agent. <i>Adaptive</i> lets the mutation loop search again against it. Report both: frozen alone
-overstates how safe the agent is. Here "adaptive" means retrying four fixed mutations against the defenses; it is
-not an attacker model that rewrites its attacks, which is the stronger test. Small n means wide confidence intervals.</div>
+defended agent. <i>Mutation retry</i> tries every attack again against the defenses with the same four mutations.
+Frozen alone overstates how safe the agent is; the adaptive attacker below, which rewrites its attacks, is the
+stronger test. <i>Goal met</i> counts only breaches where the attacker got what that attack asked for.
+Small n means wide confidence intervals.</div>
+<h2>Adaptive attacker</h2>
+<div class="note">An attacker model writes an attack, reads the agent's reply, and rewrites it, up to the
+number of rounds shown, knowing which defenses are on (PAIR-style, Chao et al. 2023). It never sees the
+system prompt or the secrets. The verifier, not the attacker, decides what counts.</div>
+<div class="scroll"><table><tr><th class="l">target</th><th class="l">scenario</th><th class="l">defense</th>
+<th class="l">attacker</th><th>goals × rounds</th><th>breached</th><th>goal met</th><th>95% CI</th>
+<th>attacker refused</th><th>cost</th><th></th></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>email</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">5</td><td class="tnum">$0.0376</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>email</td><td>none</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">6</td><td class="tnum">$0.0273</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>fintech</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">4</td><td class="tnum">$0.048</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>fintech</td><td>none</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">4</td><td class="tnum">$0.0432</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>fintech</td><td>none</td><td>claude-opus-5-5</td><td class="tnum">7 × 5</td><td class="tnum r">0/7 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–35.4%</td><td class="tnum">7</td><td class="tnum">$0.0403</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>healthcare</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">7</td><td class="tnum">$0.0331</td><td></td></tr><tr><td class="cat">live:claude-haiku-5-5</td><td>healthcare</td><td>none</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">4</td><td class="tnum">$0.0328</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>email</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">3/9 (33.3%)</td><td class="tnum r">1</td><td class="tnum">12.1%–64.6%</td><td class="tnum">6</td><td class="tnum">$0.011</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>email</td><td>full + no secret in prompt</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">5</td><td class="tnum">$0.0159</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>fintech</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">5/9 (55.6%)</td><td class="tnum r">1</td><td class="tnum">26.7%–81.1%</td><td class="tnum">2</td><td class="tnum">$0.0118</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>fintech</td><td>full + no secret in prompt</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">3</td><td class="tnum">$0.0209</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>healthcare</td><td>full</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">2/9 (22.2%)</td><td class="tnum r">1</td><td class="tnum">6.3%–54.7%</td><td class="tnum">5</td><td class="tnum">$0.0094</td><td></td></tr><tr><td class="cat">live:qwen2.5:7b</td><td>healthcare</td><td>full + no secret in prompt</td><td>claude-haiku-5-5</td><td class="tnum">9 × 6</td><td class="tnum r">0/9 (0.0%)</td><td class="tnum r">0</td><td class="tnum">0.0%–29.9%</td><td class="tnum">4</td><td class="tnum">$0.019</td><td></td></tr></table></div>
+<h2>Outside check: official AgentDojo benchmark</h2>
+<div class="note">AgentDojo (Debenedetti et al., NeurIPS 2024, ETH Zurich): banking suite, its own
+"important_instructions" attack and its own Protect AI classifier defense (<code>transformers_pi_detector</code>).
+These are not RedCell's attacks; it checks RedCell's findings against an independent benchmark.
+"Attack succeeded" means the injection's goal was achieved.</div>
+<div class="scroll"><table><tr><th class="l">model</th><th class="l">defense</th><th>utility, no attack</th>
+<th>utility under attack</th><th>attack succeeded</th><th>cost</th><th></th></tr><tr><td class="cat">claude-haiku-5-5</td><td>none</td><td class="tnum">12/16 (75.0%)</td><td class="tnum">98/144 (68.1%)</td><td class="tnum r">0/144 (0.0%)</td><td class="tnum">$0.202348</td><td></td></tr><tr><td class="cat">claude-haiku-5-5</td><td>pi_detector</td><td class="tnum">6/16 (37.5%)</td><td class="tnum">52/144 (36.1%)</td><td class="tnum r">0/144 (0.0%)</td><td class="tnum">$0.238789</td><td></td></tr><tr><td class="cat">qwen2.5:7b</td><td>none</td><td class="tnum">7/16 (43.8%)</td><td class="tnum">64/144 (44.4%)</td><td class="tnum r">30/144 (20.8%)</td><td class="tnum">$0.0</td><td></td></tr><tr><td class="cat">qwen2.5:7b</td><td>pi_detector</td><td class="tnum">7/16 (43.8%)</td><td class="tnum">54/144 (37.5%)</td><td class="tnum r">10/144 (6.9%)</td><td class="tnum">$0.0</td><td></td></tr></table></div>
 
-<h2 class="tname">live:qwen2.5:7b</h2>
-<p class="tags mono">corpus: v1.0.0+33d9acc47b50 &nbsp;·&nbsp; n=42 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<h2 class="tname">live:qwen2.5:7b · fintech</h2>
+<p class="tags mono">corpus: v1.0.0+9b096321fb25 &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
 <div class="hero">
-  <div class="kpi"><div class="v red">83.3%</div><div class="k">undefended</div>
-    <div class="ci">95% CI [69.4%, 91.7%]</div></div>
+  <div class="kpi"><div class="v red">84.1%</div><div class="k">undefended</div>
+    <div class="ci">95% CI [73.2%, 91.1%]</div></div>
   <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
-    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
-  <div class="kpi"><div class="v amber">0.0%</div><div class="k">defended · adaptive</div>
-    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">0.0%</div><div class="k">defended · mutation retry</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
 </div>
 <h3>Per-OWASP category</h3>
 <div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
-<table><tr><td class="cat">LLM01</td><td class="tnum r">91.7%</td><td class="track"><div class="bar red" style="width:91.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">83.3%</td><td class="track"><div class="bar red" style="width:83.3%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">100.0%</td><td class="track"><div class="bar red" style="width:100.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">66.7%</td><td class="track"><div class="bar red" style="width:66.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">83.3%</td><td class="track"><div class="bar red" style="width:83.3%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
-<h3>Per-layer attribution (each layer on its own)</h3>
-<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:83.3%"></div></td><td class="tnum t">kills 83.3%</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:21.4%"></div></td><td class="tnum t">kills 21.4%</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:26.2%"></div></td><td class="tnum t">kills 26.2%</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:50.0%"></div></td><td class="tnum t">kills 50.0%</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:7.1%"></div></td><td class="tnum t">kills 7.1%</td></tr></table>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">95.2%</td><td class="track"><div class="bar red" style="width:95.2%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">85.7%</td><td class="track"><div class="bar red" style="width:85.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">100.0%</td><td class="track"><div class="bar red" style="width:100.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">66.7%</td><td class="track"><div class="bar red" style="width:66.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">85.7%</td><td class="track"><div class="bar red" style="width:85.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:82.5%"></div></td><td class="tnum t">cuts 82.5 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:23.8%"></div></td><td class="tnum t">cuts 23.8 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:25.4%"></div></td><td class="tnum t">cuts 25.4 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:58.7%"></div></td><td class="tnum t">cuts 58.7 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:19.0%"></div></td><td class="tnum t">cuts 19.0 pts</td></tr></table>
 <h3>Cost — token counts reported by the model API</h3>
-<p class="mono" style="color:var(--muted)">683 model calls &nbsp;·&nbsp; 443,077 input + 60,166 output tokens &nbsp;·&nbsp; $0.0</p>
+<p class="mono" style="color:var(--muted)">1117 model calls &nbsp;·&nbsp; 764,745 input + 90,178 output tokens &nbsp;·&nbsp; $0.0</p>
 <h3>Benign control (6 normal questions, no attack)</h3>
 <table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
 <tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
 <tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
 <tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
-<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 43.9 ms &nbsp;·&nbsp; p99 83.6 ms (n=26)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 6.6 ms &nbsp;·&nbsp; p99 35.1 ms (n=6)</td></tr></table>
-<h2 class="tname">live:claude-haiku-5-5</h2>
-<p class="tags mono">corpus: v1.0.0+36a1ced6338a &nbsp;·&nbsp; n=42 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 40.3 ms &nbsp;·&nbsp; p99 66.1 ms (n=64)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 9.8 ms &nbsp;·&nbsp; p99 44.2 ms (n=6)</td></tr></table>
+<h2 class="tname">live:qwen2.5:7b · healthcare</h2>
+<p class="tags mono">corpus: v1.0.0+4b7a4e587234 &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<div class="hero">
+  <div class="kpi"><div class="v red">74.6%</div><div class="k">undefended</div>
+    <div class="ci">95% CI [62.7%, 83.7%]</div></div>
+  <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">0.0%</div><div class="k">defended · mutation retry</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+</div>
+<h3>Per-OWASP category</h3>
+<div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">95.2%</td><td class="track"><div class="bar red" style="width:95.2%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">85.7%</td><td class="track"><div class="bar red" style="width:85.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">100.0%</td><td class="track"><div class="bar red" style="width:100.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">42.9%</td><td class="track"><div class="bar red" style="width:42.9%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">71.4%</td><td class="track"><div class="bar red" style="width:71.4%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:57.1%"></div></td><td class="tnum t">cuts 57.1 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:7.9%"></div></td><td class="tnum t">cuts 7.9 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:23.8%"></div></td><td class="tnum t">cuts 23.8 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:50.8%"></div></td><td class="tnum t">cuts 50.8 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:12.7%"></div></td><td class="tnum t">cuts 12.7 pts</td></tr></table>
+<h3>Cost — token counts reported by the model API</h3>
+<p class="mono" style="color:var(--muted)">1115 model calls &nbsp;·&nbsp; 763,726 input + 79,307 output tokens &nbsp;·&nbsp; $0.0</p>
+<h3>Benign control (6 normal questions, no attack)</h3>
+<table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
+<tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
+<tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
+<tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 46.0 ms &nbsp;·&nbsp; p99 75.7 ms (n=78)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 11.6 ms &nbsp;·&nbsp; p99 46.2 ms (n=6)</td></tr></table>
+<h2 class="tname">live:qwen2.5:7b · email</h2>
+<p class="tags mono">corpus: v1.0.0+e584e83459c5 &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<div class="hero">
+  <div class="kpi"><div class="v red">55.6%</div><div class="k">undefended</div>
+    <div class="ci">95% CI [43.3%, 67.2%]</div></div>
+  <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">0.0%</div><div class="k">defended · mutation retry</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+</div>
+<h3>Per-OWASP category</h3>
+<div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">38.1%</td><td class="track"><div class="bar red" style="width:38.1%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">85.7%</td><td class="track"><div class="bar red" style="width:85.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">100.0%</td><td class="track"><div class="bar red" style="width:100.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">38.1%</td><td class="track"><div class="bar red" style="width:38.1%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">85.7%</td><td class="track"><div class="bar red" style="width:85.7%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:50.8%"></div></td><td class="tnum t">cuts 50.8 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:14.3%"></div></td><td class="tnum t">cuts 14.3 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:27.0%"></div></td><td class="tnum t">cuts 27.0 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:33.3%"></div></td><td class="tnum t">cuts 33.3 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:9.5%"></div></td><td class="tnum t">cuts 9.5 pts</td></tr></table>
+<h3>Cost — token counts reported by the model API</h3>
+<p class="mono" style="color:var(--muted)">1081 model calls &nbsp;·&nbsp; 681,269 input + 76,865 output tokens &nbsp;·&nbsp; $0.0</p>
+<h3>Benign control (6 normal questions, no attack)</h3>
+<table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
+<tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
+<tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
+<tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 38.3 ms &nbsp;·&nbsp; p99 87.3 ms (n=104)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 16.3 ms &nbsp;·&nbsp; p99 45.2 ms (n=6)</td></tr></table>
+<h2 class="tname">live:claude-haiku-5-5 · email</h2>
+<p class="tags mono">corpus: v1.0.0+f8ec3fc85ea9 &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
 <div class="hero">
   <div class="kpi"><div class="v red">0.0%</div><div class="k">undefended</div>
-    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
   <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
-    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
-  <div class="kpi"><div class="v amber">0.0%</div><div class="k">defended · adaptive</div>
-    <div class="ci">95% CI [0.0%, 8.4%]</div></div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">-</div><div class="k">defended · mutation retry</div>
+    <div class="ci">not run</div></div>
 </div>
 <h3>Per-OWASP category</h3>
 <div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
 <table><tr><td class="cat">LLM01</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
-<h3>Per-layer attribution (each layer on its own)</h3>
-<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">kills 0.0%</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">kills 0.0%</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">kills 0.0%</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">kills 0.0%</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">kills 0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr></table>
 <h3>Cost — token counts reported by the model API</h3>
-<p class="mono" style="color:var(--muted)">815 model calls &nbsp;·&nbsp; 1,116,491 input + 205,536 output tokens &nbsp;·&nbsp; $0.2144</p>
+<p class="mono" style="color:var(--muted)">597 model calls &nbsp;·&nbsp; 805,248 input + 183,250 output tokens &nbsp;·&nbsp; $0.1721</p>
 <h3>Benign control (6 normal questions, no attack)</h3>
 <table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
 <tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
 <tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
 <tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
-<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 46.0 ms &nbsp;·&nbsp; p99 96.1 ms (n=28)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 26.0 ms &nbsp;·&nbsp; p99 63.8 ms (n=6)</td></tr></table>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 52.7 ms &nbsp;·&nbsp; p99 92.3 ms (n=144)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 19.7 ms &nbsp;·&nbsp; p99 44.3 ms (n=6)</td></tr></table>
+<h2 class="tname">live:claude-haiku-5-5 · fintech</h2>
+<p class="tags mono">corpus: v1.0.0+6badb6046d8c &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<div class="hero">
+  <div class="kpi"><div class="v red">0.0%</div><div class="k">undefended</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">-</div><div class="k">defended · mutation retry</div>
+    <div class="ci">not run</div></div>
+</div>
+<h3>Per-OWASP category</h3>
+<div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr></table>
+<h3>Cost — token counts reported by the model API</h3>
+<p class="mono" style="color:var(--muted)">585 model calls &nbsp;·&nbsp; 864,759 input + 191,536 output tokens &nbsp;·&nbsp; $0.1822</p>
+<h3>Benign control (6 normal questions, no attack)</h3>
+<table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
+<tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
+<tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
+<tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 54.6 ms &nbsp;·&nbsp; p99 108.7 ms (n=74)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 30.4 ms &nbsp;·&nbsp; p99 40.5 ms (n=6)</td></tr></table>
+<h2 class="tname">live:claude-haiku-5-5 · healthcare</h2>
+<p class="tags mono">corpus: v1.0.0+9fa532f84d19 &nbsp;·&nbsp; n=63 attacks &nbsp;·&nbsp; deterministic verifier (no LLM in the reward path)</p>
+<div class="hero">
+  <div class="kpi"><div class="v red">0.0%</div><div class="k">undefended</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v teal">0.0%</div><div class="k">defended · frozen replay</div>
+    <div class="ci">95% CI [0.0%, 5.7%]</div></div>
+  <div class="kpi"><div class="v amber">-</div><div class="k">defended · mutation retry</div>
+    <div class="ci">not run</div></div>
+</div>
+<h3>Per-OWASP category</h3>
+<div class="legend mono"><b class="r">■</b> undefended &nbsp; <b class="t">■</b> defended</div>
+<table><tr><td class="cat">LLM01</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM02</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM05</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM06</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr><tr><td class="cat">LLM07</td><td class="tnum r">0.0%</td><td class="track"><div class="bar red" style="width:0.0%"></div><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">0.0%</td></tr></table>
+<h3>Each layer on its own: percentage points it cuts from the undefended rate</h3>
+<table><tr><td>L1 input classifier</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L2 spotlighting</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L3 tool allowlist</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L4 withhold + Presidio</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr><tr><td>L5 render-safe output</td><td class="track"><div class="bar teal" style="width:0.0%"></div></td><td class="tnum t">cuts 0.0 pts</td></tr></table>
+<h3>Cost — token counts reported by the model API</h3>
+<p class="mono" style="color:var(--muted)">580 model calls &nbsp;·&nbsp; 836,161 input + 137,616 output tokens &nbsp;·&nbsp; $0.1524</p>
+<h3>Benign control (6 normal questions, no attack)</h3>
+<table><tr><th class="l"></th><th>no defenses</th><th>all defenses</th></tr>
+<tr><td>false breaches</td><td class="tnum">0/6</td><td class="tnum">0/6</td></tr>
+<tr><td>blocked by L1 (false alarm)</td><td class="tnum">-</td><td class="tnum">0/6</td></tr>
+<tr><td>useful answers (facts present)</td><td class="tnum">4/4</td><td class="tnum">4/4</td></tr>
+<tr><td>l1_ms</td><td class="tnum" colspan="2">p50 51.9 ms &nbsp;·&nbsp; p99 98.6 ms (n=70)</td></tr><tr><td>l4_ms</td><td class="tnum" colspan="2">p50 21.7 ms &nbsp;·&nbsp; p99 30.7 ms (n=6)</td></tr></table>
 <p class="foot">Generated from dashboard/scorecards/*.json · every verdict is a deterministic function of a server-recorded trace.</p>
 </div></body></html>

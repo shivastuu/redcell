@@ -45,6 +45,14 @@ def test_determinism():
     assert asr(campaign.discover(_H)) == asr(_BASE)
 
 
+def test_goal_met_rate_uses_its_own_count():
+    # Regression: "attacker's goal met" once reported the any-breach rate next to its own k/n.
+    from types import SimpleNamespace as A
+    from redcell_attackers.scorecard import _ci
+    two_breaches_one_on_goal = [A(breached=True, on_goal=True), A(breached=True, on_goal=False)]
+    assert _ci(two_breaches_one_on_goal, lambda a: a.on_goal)["asr"] == 0.5
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
