@@ -200,3 +200,35 @@ flowchart TD
 ```
 
 - Docs only; no code changes. Nothing is committed until the user asks.
+
+## 2026-11-15 — Phase 3 follow-ups: an attacker that doesn't refuse, and a second classifier
+
+```mermaid
+flowchart TD
+  Q1{"Haiku's 0/54 adaptive is a lower bound:<br/>the Haiku attacker refused ~half its goals"}
+  Q1 -->|"Opus as attacker"| R1["Rejected<br/>refused (cyber); rewording around it is off-limits"]
+  Q1 -->|"local open-weight attacker:<br/>Qwen2.5-14B via Ollama"| C1["Chosen<br/>free, fits 18 GB, attacker code already supports it"]
+  C1 --> Q2{"Is a 14B attacker strong enough<br/>for its zero to mean anything?"}
+  Q2 -->|"calibrate: same attacker vs guarded Qwen fintech,<br/>where the Haiku attacker got 5/9"| C2["Chosen"]
+  Q2 -->|"skip calibration"| R2["Rejected<br/>a weak attacker's zero proves nothing"]
+  Q3{"Undefended or guarded Haiku?"}
+  Q3 -->|"undefended first: the hardest case for the target;<br/>$0.10 cap per run"| C3["Chosen<br/>guarded only if undefended breaks"]
+
+  Q4{"Second classifier for the replay"}
+  Q4 -->|"Meta Llama Prompt Guard 2 (86M)"| C4["Chosen<br/>current and widely used; gated licence"]
+  Q4 -->|"deepset deberta-v3-base-injection"| R4["Rejected<br/>older, small training set"]
+  Q5{"What to replay"}
+  Q5 -->|"only the 10 winning payloads"| R5["Rejected alone<br/>n = 10 and no false-alarm side"]
+  Q5 -->|"every adaptive payload (winners marked),<br/>static catalog, benign questions"| C5["Chosen<br/>block rate and false-alarm rate for both"]
+  O1["Open: when the user's Prompt Guard 2<br/>licence is approved"]
+
+  classDef chosen fill:#d4edda,stroke:#28a745,color:#000
+  classDef rejected fill:#f8d7da,stroke:#dc3545,color:#000
+  classDef open fill:#fff3cd,stroke:#e0a800,color:#000
+  class C1,C2,C3,C4,C5 chosen
+  class R1,R2,R4,R5 rejected
+  class O1 open
+```
+
+- The 14B attacker removes refusals, not weakness; the calibration run says how much its zero is worth.
+- The replay scores the payload text as the attacker wrote it, not the exact field the agent saw.

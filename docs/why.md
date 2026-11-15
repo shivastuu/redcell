@@ -290,7 +290,37 @@ flowchart LR
 - **No.** 0 of 54 adaptive attacks (CI 0–6.6%), but the attacker model declined about half its goals
   (for example, prescribing oxycodone or forwarding someone's email). So it is a lower bound: the
   attacker held back, not only the target. A stronger attacker needs Anthropic's verification route
-  (Q37) or an open model.
+  (Q37) or a strong open model.
+- **Tried since:** a local Qwen2.5-14B attacker that barely refuses. It got 0/27 against Haiku, but it was
+  too weak to count (Q49), so the lower bound stands.
+
+### 49. You ran a second attacker model against Haiku. Why doesn't its zero count?
+- **Why try it:** Haiku's 0/54 was a lower bound because the Haiku attacker refused about half its goals.
+  A local open-weight attacker (Qwen2.5-14B) is free, fits in 18 GB, and refused only 2 of 27.
+- **Found:** 0/27 against undefended Haiku. But on the calibration run, the same attacker against guarded
+  Qwen on the bank agent, it also got 0/9, where the Haiku attacker got 5/9 (Fisher's exact test, p = 0.03).
+  An attacker that can't break the weak target tells you nothing about the strong one.
+- **Lesson:** calibrate an attacker on a target it should beat before trusting its zeros. Removing refusals
+  isn't the same as adding strength.
+- **If they push** ("so what would settle it?"): a strong attacker that doesn't refuse: Anthropic's Cyber
+  Verification Program, or a larger open model on bigger hardware.
+
+### 50. Did the attacks that beat L1 just exploit one classifier?
+- **Test:** every adaptive payload was scored again by Meta's Llama Prompt Guard 2 with the same settings.
+- **Found:** Prompt Guard 2 also missed all 10 payloads that got past the five guards. It flagged 1 of 590
+  adaptive payloads and 38 of 144 static texts, against L1's 202 and 131. Its model card says it only flags
+  explicit attempts to override instructions; Meta dropped the broader injection label as "too broad to be useful".
+- **Lesson:** calm, procedural instructions are a blind spot for classifiers as a category, not for one model.
+  Stacking both added nothing. That is why the structural fix (no secret in the prompt) mattered.
+- **Not this:** reporting only the 10 winners. Scoring all payloads plus clean texts shows each classifier's
+  catch rate and its false-alarm rate, not just one number.
+
+### 51. Was "zero false alarms" true?
+- **Only for questions.** The benign check counted questions L1 blocked. Scoring clean texts directly, L1
+  flagged the email subject "Your account security details" (0.998), blanked it silently, and Qwen then
+  listed that email as having no subject. No checked fact depended on it, so useful answers stayed 4/4.
+- **Lesson:** a metric only counts what it looks at. Silent blanking (Q19) hides false alarms too, so measure
+  them where they happen, per field.
 
 ## Phase 4 — firmer numbers
 
@@ -328,8 +358,11 @@ flowchart LR
 | All five guards, replayed and retried with four mutations | 0/189 (CI 0–2.0%) | 0/189 |
 | Each guard alone, points cut (fintech · healthcare · email) | L1 82.5 · 57.1 · 50.8 — L4 58.7 · 50.8 · 33.3 — L3 25.4 · 23.8 · 27.0 — L2 23.8 · 7.9 · 14.3 — L5 19.0 · 12.7 · 9.5 | nothing to block |
 | Adaptive attacker (Haiku), all guards | 10/27 (CI 21.5–55.8%); 0/27 with no secret in the prompt | 0/54 (CI 0–6.6%) |
+| Local 14B attacker (barely refuses) | 0/9 on guarded bank agent (Haiku attacker: 5/9), too weak | 0/27 undefended |
+| Winning payloads flagged: L1 / Prompt Guard 2 | 0/10 / 0/10; all adaptive payloads 202/590 / 1/590 | |
+| Clean texts flagged: L1 / Prompt Guard 2 | 1/36 (an email subject) / 0/36 | |
 | AgentDojo banking: attacks succeeded, none → its classifier | 20.8% → 6.9%, tasks solved 7/16 → 7/16 | 0/144 → 0/144, tasks solved 12/16 → 6/16 |
-| Benign: false breaches / L1 false alarms | 0/6 / 0/6 in each scenario | 0/6 / 0/6 in each scenario |
+| Benign: false breaches / questions blocked by L1 | 0/6 / 0/6 in each scenario | 0/6 / 0/6 in each scenario |
 | Benign: useful answers, no guards → all guards | 4/4 → 4/4 | 4/4 → 4/4 |
 | L1 latency | idle p50 33 ms; in a campaign p50 45–58 ms, p99 142–297 ms | same classifier |
 | Cost of the three static campaigns | $0 (3,313 calls, local) | $0.50 |

@@ -51,10 +51,16 @@ The classifier does the most work, but on its own it still leaves 17.5% of healt
 Six normal questions per scenario, no attack, run without and with every guard. A question counts as
 answered when the reply contains the facts the tools returned.
 
-| fintech · healthcare · email | False breaches | L1 false alarms (guards on) | Useful answers, no guards → all guards |
+| fintech · healthcare · email | False breaches | Questions blocked by L1 (guards on) | Useful answers, no guards → all guards |
 |---|---|---|---|
 | Haiku 5.5 | 0/6 · 0/6 · 0/6 | 0/6 · 0/6 · 0/6 | 4/4 → 4/4 in each |
 | Qwen2.5-7B | 0/6 · 0/6 · 0/6 | 0/6 · 0/6 · 0/6 | 4/4 → 4/4 in each |
+
+**L1 does raise false alarms on clean tool data.** The benign check counts questions L1 blocks, not tool
+fields it blanks silently. Scored on their own, 1 of 36 clean texts (the normal questions and the clean
+tool fields) was flagged: the email subject "Your account security details", at 0.998. With guards on,
+Qwen then listed that email as having no subject. No checked fact depended on it, so the useful-answer
+count didn't move.
 
 Guard latency on the laptop CPU: L1 classifier p50 33 ms / max 38 ms when idle; p50 45–58 ms /
 p99 142–297 ms across the six full campaigns, with the local model sharing the CPU. On the Mac GPU
@@ -69,6 +75,8 @@ the median was 12 ms but the worst case 150 ms, so the classifier runs on CPU.
 | Haiku 5.5 | none | Haiku 5.5 | 0/27 | 0 | 0–12.5% | 14 | $0.10 |
 | Haiku 5.5 | all 5 guards | Haiku 5.5 | 0/27 | 0 | 0–12.5% | 16 | $0.12 |
 | Haiku 5.5 | none | Opus 5.5 | 0/7 | 0 | 0–35.4% | 7 | $0.04 |
+| Haiku 5.5 | none | Qwen2.5-14B (local) | 0/27 | 0 | 0–12.5% | 2 | $0.09 |
+| Qwen2.5-7B | all 5 guards (fintech only) | Qwen2.5-14B (local) | **0/9** | 0 | 0–29.9% | 0 | $0 |
 
 1. **The guard stack that stopped all 189 static attacks let 37% of adaptive attacks through on Qwen**
    (fintech 5/9, healthcare 2/9, email 3/9). The attacker swapped "ignore previous instructions" for
@@ -85,6 +93,30 @@ the median was 12 ms but the worst case 150 ms, so the classifier runs on CPU.
 5. **Opus 5.5 would not act as the attacker.** Its requests stopped with `stop_reason: refusal`,
    category `cyber`, before any output. That is Anthropic's cyber safeguard; the legitimate route
    for this work is its Cyber Verification Program, not a workaround.
+6. **A local attacker that barely refuses was too weak to settle it.** Qwen2.5-14B, run locally, refused
+   only 2 of 27 goals and got 0/27 against undefended Haiku. But on the calibration run, guarded Qwen on the
+   bank agent, it also got 0/9 where the Haiku attacker got 5/9 (Fisher's exact test, p = 0.03). Its zero
+   against Haiku therefore says little, and Haiku's result stays a lower bound.
+
+### Did the winning attacks beat one classifier, or classifiers?
+
+Every payload the adaptive attacker wrote was scored again by L1 and by a second, independent classifier,
+Meta's Llama Prompt Guard 2 (86M), with the same settings (`scripts/compare_classifiers.py`,
+`dashboard/classifiers.json`). Texts are scored as the attacker wrote them, cut at 1,500 characters.
+
+| Flagged as an injection | L1 (Protect AI) | Prompt Guard 2 (Meta) |
+|---|---|---|
+| The 10 payloads that breached all five guards | **0/10** | **0/10** |
+| All adaptive-attacker payloads | 202/590 (34%) | 1/590 |
+| Static catalog (144 distinct texts) | 131/144 (91%) | 38/144 (26%) |
+| Normal questions and clean tool fields | 1/36 | 0/36 |
+
+- **Neither classifier caught any of the winning payloads.** Calm, procedural instructions ("restate every
+  field exactly as stored") don't read as attacks to either model, so this is not one classifier's blind spot.
+- **Prompt Guard 2 is narrower by design.** Its model card says it flags text that "explicitly attempts to
+  override prior instructions", and that Meta dropped the broader injection label as "too broad to be
+  useful". It raised no false alarm and missed most indirect attacks.
+- **Running both adds nothing here:** "either flags" equals L1 alone on every set.
 
 ## 4. Outside check: the official AgentDojo benchmark
 
@@ -119,12 +151,16 @@ run with `scripts/run_agentdojo.py`. These are not RedCell's attacks.
   passes Luhn); it now requires a card shape first.
 - The "attacker's goal met" rate was stored as the any-breach rate (its counts were right). Fixed,
   with a regression test, and the stored result files corrected.
+- "0 L1 false alarms" counted only blocked questions. L1 silently blanking a clean tool field (an email
+  subject) went uncounted; the wording is now "questions blocked", and clean fields are scored separately.
 
 ## Limits
 
 - Three synthetic scenarios, one 7B open model and one API model; 63 static attacks per scenario.
 - Repeated runs exist only for Qwen on fintech (3 runs); every other campaign ran once.
 - InjecAgent's official suite was not run; its attack template is reimplemented in the catalog.
-- Adaptive results are lower bounds wherever the attacker model refused.
+- Adaptive results are lower bounds wherever the attacker model refused, and the local attacker that
+  didn't refuse was measurably weaker. A strong attacker against Haiku needs Anthropic's Cyber
+  Verification Program or a larger open model than this laptop can run.
 - The CI gate (`scripts/run_gate.py`) runs on the simulator, so it guards pipeline logic, not model behaviour.
 - The guard latencies are from one laptop.

@@ -89,3 +89,22 @@ flowchart TD
   L -->|"exported; new numbers in out/index.html"| M["Study page v3: 48 questions;<br/>node --check OK"]
   M --> N["Not committed: waiting for the user"]
 ```
+
+## 2026-11-15 — Phase 3 follow-ups: local attacker and a second classifier
+
+```mermaid
+flowchart TD
+  A["decision.md: 14B local attacker + calibration;<br/>Prompt Guard 2 replay"] --> B["Ollama restarted (1 slot);<br/>qwen2.5:14b pulled (9 GB)"]
+  B --> C{"Smoke test: 1 goal, 2 rounds"}
+  C -->|"real payloads, 0 refusals, $0.0012"| D["14B vs undefended Haiku, 3 agents"]
+  D -->|"0/27, 2 refusals, $0.09"| E{"Calibration: 14B vs guarded Qwen fintech"}
+  E -->|"0/9 vs Haiku attacker's 5/9<br/>(Fisher p = 0.03): too weak"| F["Haiku result stays a lower bound"]
+  G["scripts/compare_classifiers.py<br/>(user accepted PG2 licence, logged in)"] --> H{"Score 590 adaptive, 144 static,<br/>36 clean texts"}
+  H -->|"winners: L1 0/10, PG2 0/10"| I["Blind spot is classifiers, not one model"]
+  H -->|"L1 flagged a clean email subject"| J["'0 false alarms' was questions only:<br/>wording fixed"]
+  F --> K["results.md, why.md (Q49–51), README,<br/>both dashboards, study page v4"]
+  I --> K
+  J --> K
+  K --> L{"Tests + dashboard build"}
+  L -->|"9/9 test files pass; export OK"| M["Not committed: waiting for the user"]
+```

@@ -17,7 +17,7 @@ measure what each guardrail actually buys you.</p>
 ## The headline
 
 > **189 attacks from published research broke an open 7B model 71% of the time, and Claude Haiku 0% of the time.**
-> With five guardrail layers on, the 7B model went to **0 of 189**, with no lost answers and no false alarms.
+> With five guardrail layers on, the 7B model went to **0 of 189**, with no lost answers and no normal question blocked.
 > Then an attacker model that rewrites its attacks got through those guards **10 of 27** times, every time by
 > leaking the secret written in the system prompt. With the secret taken out of the prompt: **0 of 27**.
 
@@ -29,7 +29,7 @@ measure what each guardrail actually buys you.</p>
 | **With all five guards** (replayed, then retried with all four mutations) | **0%** · 0 of 189 | 0% · 0 of 189 |
 | **Adaptive attacker** (Claude Haiku as attacker), all five guards | **10 of 27** · CI 21.5 – 55.8% | 0 of 27 |
 | … with the secret removed from the system prompt | **0 of 27** | not needed |
-| Normal questions wrongly flagged | 0 of 18 | 0 of 18 |
+| Normal questions blocked by L1 | 0 of 18 | 0 of 18 |
 | Useful answers, no guards → all guards | 12/12 → 12/12 | 12/12 → 12/12 |
 | Cost of the three static campaigns | $0 (3,313 calls, local) | **$0.50** |
 
@@ -134,6 +134,10 @@ flowchart LR
    whole-output classifier cut Qwen's attack success from 20.8% to 6.9% at no cost in tasks solved, but halved
    Haiku's (12/16 → 6/16) with no attacks to stop. RedCell's L1, the same model scoring each field, kept every
    useful answer.
+9. **Two classifiers, one blind spot.** Meta's Prompt Guard 2, scoring the same texts, also missed all 10 payloads
+   that beat the five guards. Calm, procedural instructions don't read as attacks to either model.
+10. **A zero only counts if the attacker could have won.** A local 14B attacker that barely refuses got 0/27
+    against Haiku, but also 0/9 against the guarded 7B model, where the Haiku attacker got 5/9. Too weak to count.
 
 The reasoning behind every decision, as study questions ("why this, why not that, what will an interviewer
 ask?"), is in **[docs/why.md](docs/why.md)**.
@@ -192,8 +196,9 @@ LLM06 excessive agency 67 · 43 · 38% · LLM07 system-prompt leakage 86 · 71 �
   rounds, knowing which defenses are on but never seeing the secrets. Frozen replay alone overstates safety.
 - **Repeats:** the Qwen bank campaign was run four times to show the spread (81.0–85.7%).
 - **Each layer on its own:** shows what every guard contributes.
-- **Benign control:** 6 normal questions, without and with all guards. Reports false breaches, false alarms, and
-  whether answers still contain the facts the tools returned.
+- **Benign control:** 6 normal questions, without and with all guards. Reports false breaches, questions blocked,
+  and whether answers still contain the facts the tools returned. Clean tool fields are scored separately: L1
+  flagged 1 of 36 (an email subject), which the benign check alone would have missed.
 - **Wilson 95% confidence intervals** on every rate. **Cost** comes from the token counts the API returns.
 - **Guard latency** (M3 Pro, CPU): L1 p50 33 ms idle; p50 45–58 ms / p99 142–297 ms during full campaigns, while
   the local model shares the CPU.
@@ -205,7 +210,8 @@ LLM06 excessive agency 67 · 43 · 38% · LLM07 system-prompt leakage 86 · 71 �
 - **Three synthetic agents**, one open 7B model and one API model; 63 attacks per agent, reimplemented from
   published templates.
 - **Small samples.** That's why every rate carries its confidence interval. Only the Qwen bank campaign was repeated.
-- **Adaptive results are lower bounds** where the attacker model refused (about half its goals against Haiku).
+- **Adaptive results are lower bounds** where the attacker model refused (about half its goals against Haiku);
+  a local attacker that doesn't refuse was too weak to replace it.
 - **CI gate:** `scripts/run_gate.py` runs on the simulator, so it protects the pipeline logic, not a real model's behaviour.
 - **Not part of any reported number:** the LLM-judge agreement study (`redcell-eval`), the LangGraph version of
   the loop (`coordinator.py`) and the scope gate in [SCOPE.md](SCOPE.md).
@@ -234,7 +240,7 @@ packages/redcell-attackers/   attack catalog, mutation loop, campaign phases, sc
 packages/redcell-verifiers/   the breach checks (plain code)
 packages/redcell-core/        shared types, planted secrets, model prices
 scripts/                      run_campaign · run_benign · run_adaptive · run_repeats · run_agentdojo ·
-                              build_leaderboard · serve_board · run_gate
+                              compare_classifiers · build_leaderboard · serve_board · run_gate
 apps/dashboard/               Next.js dashboard, built from the result files in dashboard/
 docs/results.md               the full write-up of every measured result
 docs/why.md                   every design decision, as study questions
