@@ -108,3 +108,25 @@ flowchart TD
   K --> L{"Tests + dashboard build"}
   L -->|"9/9 test files pass; export OK"| M["Not committed: waiting for the user"]
 ```
+
+## 2026-11-16 — trickier attacks and a retrained guard
+
+```mermaid
+flowchart TD
+  A["decision.md: split, invisible, Hindi/Hinglish;<br/>retrain L1, held-out tests"] --> B["Planted.injected2 + AttackSpec.parts;<br/>variants.py; verifier decodes tag characters"]
+  B --> C{"tests"}
+  C -->|"split left the whole instruction in one half"| D["Split the instruction, not the text"]
+  C -->|"edit hook emptied the zero-width list"| E["Escape codes + a test that fails if empty"]
+  D --> F{"Offline: L1 vs Prompt Guard 2"}
+  E --> F
+  F -->|"either half flagged 63/63; Hindi 27/27;<br/>invisible only 4/27"| G["Live runs: Qwen 468, Haiku 468 ($0.23)"]
+  G -->|"Qwen: split 28 vs 31, Hindi 14, Hinglish 15, English 18;<br/>all 0 with guards. Haiku: 0/468"| H{"Invisible: can the models read it?"}
+  H -->|"Qwen no; Haiku yes, refused all 54"| I["Documented, no new guard"]
+  J["gen_clean_text.py: 568 texts ($0.02)"] --> K["train_l1.py"]
+  K -->|"MPS out of memory next to Ollama"| L["TRAIN_DEVICE=cpu"]
+  L -->|"winners 10/10, false alarms 13% → 3%"| M{"Live with retrained L1"}
+  M -->|"benign 0/18 blocked; adaptive 0/27 (was 10/27),<br/>like-for-like 6/6 held, p = 0.002"| N["results.md §5–6, why.md Q52–56,<br/>README, both dashboards, study page v5"]
+  I --> N
+  N --> O{"9/9 test files; dashboard build"}
+  O -->|"pass"| P["Not committed: waiting for the user"]
+```

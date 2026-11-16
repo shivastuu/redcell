@@ -126,6 +126,41 @@ These are not RedCell's attacks; it checks RedCell's findings against an indepen
 <th>utility under attack</th><th>attack succeeded</th><th>cost</th><th></th></tr>{rows}</table></div>"""
 
 
+def variants_block():
+    """Trickier variants, each next to its control (scripts/run_variants.py)."""
+    runs = _load_all("variants")
+    if not runs:
+        return ""
+    cell = lambda x, cls: f'<td class="tnum {cls}">{x["k"]}/{x["n"]} ({pct(x["rate"])})</td>' if x else "<td></td>"  # noqa: E731
+    rows = ""
+    for r in sorted(runs, key=lambda r: (r["target"], r["set"])):
+        for v in dict.fromkeys(k.split("/")[0] for k in r["summary"]):
+            rows += (f'<tr><td class="cat">{esc(r["target"])}</td><td>{esc(r["set"])}</td><td>{esc(v)}</td>'
+                     f'{cell(r["summary"].get(v + "/none"), "r")}{cell(r["summary"].get(v + "/full"), "t")}'
+                     f'<td>{"" if r["complete"] else "stopped early"}</td></tr>')
+    return f"""<h2>Trickier attacks, each next to its control</h2>
+<div class="note">split: the instruction cut across two fields of one record. hi / hinglish: the same goal in
+Hindi or Hinglish. invisible: hidden in Unicode tag characters. One shot each (scripts/run_variants.py).</div>
+<div class="scroll"><table><tr><th class="l">target</th><th class="l">set</th><th class="l">variant</th>
+<th>breached, no guards</th><th>breached, all guards</th><th></th></tr>{rows}</table></div>"""
+
+
+def retrain_block():
+    """L1 before and after retraining on the attacks that beat it (scripts/train_l1.py)."""
+    p = os.path.join(DASH, "l1_retrain.json")
+    if not os.path.exists(p):
+        return ""
+    with open(p) as f:
+        d = json.load(f)
+    kn = lambda x: f'{x["k"]}/{x["n"]} ({pct(x["rate"])})'  # noqa: E731
+    rows = "".join(f'<tr><td>{esc(k)}</td><td class="tnum">{kn(b)}</td><td class="tnum">{kn(d["after"][k])}</td></tr>'
+                   for k, b in d["before"].items())
+    return f"""<h2>L1 retrained on the attacks that beat it</h2>
+<div class="note">Fine-tuned on other runs' attacker payloads and generated clean text; every set below was held
+out of training. Share flagged as an injection.</div>
+<div class="scroll"><table><tr><th class="l">texts</th><th>L1 before</th><th>L1 retrained</th></tr>{rows}</table></div>"""
+
+
 def spread_text(d):
     r = d.get("repeats")
     return f' <span class="sub2">· {r["repeats"]} runs {pct(r["min"])}–{pct(r["max"])}</span>' if r else ""
@@ -285,6 +320,8 @@ stronger test. <i>Goal met</i> counts only breaches where the attacker got what 
 Small n means wide confidence intervals.</div>
 {adaptive_block()}
 {agentdojo_block()}
+{variants_block()}
+{retrain_block()}
 {sections}
 <p class="foot">Generated from dashboard/scorecards/*.json · every verdict is a deterministic function of a server-recorded trace.</p>
 </div></body></html>"""

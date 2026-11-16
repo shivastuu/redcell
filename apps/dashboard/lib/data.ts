@@ -36,6 +36,10 @@ export type AgentDojo = {
   utility: Rate; utility_under_attack: Rate; targeted_asr: Rate;
 };
 
+type K = { k: number; n: number; rate: number };
+export type Variants = { set: string; target: string; complete: boolean; summary: Record<string, K> };
+export type Retrain = { before: Record<string, K>; after: Record<string, K> };
+
 export type Card = Scorecard & { scenario: string; benign?: Benign; repeats?: Repeats };
 
 const slug = (t: string) => t.replaceAll(":", "_").replaceAll("/", "_");
@@ -62,5 +66,6 @@ export function loadAll() {
     };
   });
   cards.sort((a, b) => b.asr.baseline.asr - a.asr.baseline.asr);
-  return { cards, adaptive: readAll<Adaptive>("adaptive"), agentdojo: readAll<AgentDojo>("agentdojo") };
+  return { cards, adaptive: readAll<Adaptive>("adaptive"), agentdojo: readAll<AgentDojo>("agentdojo"),
+           variants: readAll<Variants>("variants"), retrain: readJson<Retrain>(path.join(DASH, "l1_retrain.json")) };
 }

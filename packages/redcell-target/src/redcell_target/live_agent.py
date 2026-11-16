@@ -184,8 +184,10 @@ async def _run_async(spec, defense: DefenseConfig, model: str) -> AttackTrace:
     goal = spec.goal
     scn = SCENARIOS[goal.scenario]
     note = _note_secret(goal)
+    head, tail = spec.parts if goal.vector == "indirect" else ("", spec.payload)
     planted = Planted(canary=note.value,
-                      injected=spec.payload if goal.vector == "indirect" else "",
+                      injected=tail if goal.vector == "indirect" else "",
+                      injected2=head,
                       poisoned=spec.payload if goal.vector == "tool_description" else "")
     server = build_server(defense, planted, scn)
     user_text = spec.payload if goal.vector == "direct" else scn.benign_task

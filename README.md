@@ -29,6 +29,7 @@ measure what each guardrail actually buys you.</p>
 | **With all five guards** (replayed, then retried with all four mutations) | **0%** · 0 of 189 | 0% · 0 of 189 |
 | **Adaptive attacker** (Claude Haiku as attacker), all five guards | **10 of 27** · CI 21.5 – 55.8% | 0 of 27 |
 | … with the secret removed from the system prompt | **0 of 27** | not needed |
+| … with L1 retrained on other runs' attacks | **0 of 27** | not needed |
 | Normal questions blocked by L1 | 0 of 18 | 0 of 18 |
 | Useful answers, no guards → all guards | 12/12 → 12/12 | 12/12 → 12/12 |
 | Cost of the three static campaigns | $0 (3,313 calls, local) | **$0.50** |
@@ -61,7 +62,7 @@ No single layer reaches 0 in every scenario; the five together do.
 
 ## Project status
 
-> **All five phases are done.** Full write-up, including the official AgentDojo check:
+> **All six phases are done.** Full write-up, including the official AgentDojo check:
 > **[docs/results.md](docs/results.md)**. Every design decision as study questions: **[docs/why.md](docs/why.md)**.
 
 | Phase | What | Status |
@@ -71,6 +72,7 @@ No single layer reaches 0 in every scenario; the five together do.
 | 3 | **Stronger attacks, more agents.** An adaptive attacker that rewrites attacks against the defenses (PAIR style; Claude Haiku as the attacker after Claude Opus refused); MCP tool poisoning; the combined attack (Liu et al. 2024); the official AgentDojo banking suite; healthcare and email agents as scenario files | ✅ Done |
 | 4 | **Firmer numbers.** Repeated runs with their spread; separating "the attacker's goal was met" from "the agent broke a rule some other way" | ✅ Done |
 | 5 | **Polish.** The Next.js dashboard rebuilt on the real data; a write-up of the results | ✅ Done |
+| 6 | **Trickier attacks, a retrained guard.** Attacks split across two fields; Hindi, Hinglish and invisible-text attacks; a second classifier (Meta's Prompt Guard 2); a local attacker, calibrated; L1 retrained on the attacks that beat it | ✅ Done |
 
 ## What it does
 
@@ -138,6 +140,14 @@ flowchart LR
    that beat the five guards. Calm, procedural instructions don't read as attacks to either model.
 10. **A zero only counts if the attacker could have won.** A local 14B attacker that barely refuses got 0/27
     against Haiku, but also 0/9 against the guarded 7B model, where the Haiku attacker got 5/9. Too weak to count.
+11. **Splitting an attack across two fields, or writing it in Hindi or Hinglish, didn't get past the guards.**
+    L1 flagged at least one half of every split attack, and Hindi and Hinglish attacks more often than English.
+12. **Invisible text slips past the classifier, but no model obeyed it.** L1 missed 23 of 27 attacks hidden in
+    Unicode tag characters. Qwen can't read them; Haiku can, and refused all 54.
+13. **Retraining the guard on what beat it worked, within limits.** Fine-tuned on other runs' attacks plus
+    realistic clean text, L1 caught all 10 winning payloads it had never seen (before: 0), false alarms on clean
+    text fell from 13% to 3%, and the adaptive attacker went from 10/27 to 0/27. It learned this attacker's
+    style; removing the secret from the prompt is the fix that doesn't depend on that.
 
 The reasoning behind every decision, as study questions ("why this, why not that, what will an interviewer
 ask?"), is in **[docs/why.md](docs/why.md)**.
@@ -212,6 +222,7 @@ LLM06 excessive agency 67 · 43 · 38% · LLM07 system-prompt leakage 86 · 71 �
 - **Small samples.** That's why every rate carries its confidence interval. Only the Qwen bank campaign was repeated.
 - **Adaptive results are lower bounds** where the attacker model refused (about half its goals against Haiku);
   a local attacker that doesn't refuse was too weak to replace it.
+- **The retrained guard** was tested against the same attacker model whose other runs it was trained on.
 - **CI gate:** `scripts/run_gate.py` runs on the simulator, so it protects the pipeline logic, not a real model's behaviour.
 - **Not part of any reported number:** the LLM-judge agreement study (`redcell-eval`), the LangGraph version of
   the loop (`coordinator.py`) and the scope gate in [SCOPE.md](SCOPE.md).
@@ -240,7 +251,8 @@ packages/redcell-attackers/   attack catalog, mutation loop, campaign phases, sc
 packages/redcell-verifiers/   the breach checks (plain code)
 packages/redcell-core/        shared types, planted secrets, model prices
 scripts/                      run_campaign · run_benign · run_adaptive · run_repeats · run_agentdojo ·
-                              compare_classifiers · build_leaderboard · serve_board · run_gate
+                              compare_classifiers · run_variants · gen_clean_text · train_l1 ·
+                              build_leaderboard · serve_board · run_gate
 apps/dashboard/               Next.js dashboard, built from the result files in dashboard/
 docs/results.md               the full write-up of every measured result
 docs/why.md                   every design decision, as study questions

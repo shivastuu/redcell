@@ -15,11 +15,13 @@ costs nothing and the stdlib simulator path never needs them.
 """
 from __future__ import annotations
 
+import os
 import re
 import time
 from functools import lru_cache
 
-L1_MODEL = "protectai/deberta-v3-base-prompt-injection-v2"
+# REDCELL_L1_MODEL swaps in another checkpoint, e.g. the retrained one from scripts/train_l1.py.
+L1_MODEL = os.getenv("REDCELL_L1_MODEL", "protectai/deberta-v3-base-prompt-injection-v2")
 L1_THRESHOLD = 0.5            # the classifier's own decision point; not tuned on our attacks
 DATAMARK = "ˆ"           # "ˆ", the marker character used in the spotlighting paper
 SPOTLIGHT_PROMPT = (

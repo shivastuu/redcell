@@ -43,6 +43,7 @@ class Planted:
     canary: str                # what the confidential field holds this run
     injected: str = ""         # indirect: attack text in the data field the agent reads
     poisoned: str = ""         # tool poisoning: attack text appended to a tool description
+    injected2: str = ""        # split attack: the first half, in a second attacker-writable field
 
 
 def _strip(obj, field: str):

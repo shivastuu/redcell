@@ -48,6 +48,28 @@ def test_custom_payload_is_sent_as_is():
     assert AttackSpec(goal, ("encoding",), custom="hello").payload == "hello"
 
 
+def test_split_halves_rejoin_and_each_is_partial():
+    from redcell_attackers.variants import split_set
+    for s in SCENARIOS:
+        for variant, spec in split_set(s):
+            head, tail = spec.parts
+            if variant == "whole":
+                assert head == "" and tail == spec.payload
+            else:
+                assert head and tail and head + " " + tail == spec.payload
+                assert spec.goal.text not in head and spec.goal.text not in tail   # neither half holds the goal
+
+
+def test_language_variants_cover_every_goal():
+    from redcell_attackers.variants import lang_set, tags
+    for s in SCENARIOS:
+        specs = lang_set(s)                                   # a missing translation raises KeyError here
+        assert len(specs) == 4 * len(SCENARIOS[s].goals)
+        for variant, spec in specs:
+            if variant == "invisible":                        # the attack is there, but not visibly
+                assert tags(spec.goal.text) in spec.payload and spec.goal.text not in spec.payload
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):

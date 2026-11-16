@@ -98,6 +98,17 @@ class AttackSpec:
         styles = _DIRECT_STYLES if g.vector == "direct" else _PLANTED_STYLES
         return styles[g.style % len(styles)].format(g=_apply_operators(g.text, self.operators))
 
+    @property
+    def parts(self) -> tuple[str, str]:
+        """(first half, second half). A "split" attack plants the halves in two fields of one record,
+        so a guard that scores each field alone never sees the whole instruction."""
+        if "split" not in self.operators:
+            return "", self.payload
+        g = _apply_operators(self.goal.text, self.operators)  # cut the instruction itself, not the wrapper
+        before, after = self.payload.split(g, 1)
+        words = g.split(" ")
+        return before + " ".join(words[:len(words) // 2]), " ".join(words[len(words) // 2:]) + after
+
 
 def _h(s: str) -> int:
     return int(hashlib.sha256(s.encode()).hexdigest(), 16)

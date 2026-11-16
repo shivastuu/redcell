@@ -52,6 +52,9 @@ def run_mode(h, defense: DefenseConfig, scenario: str) -> dict:
             "useful": sum(r["useful"] for r in checked), "checkable": len(checked)}
 
 
+# A retrained L1 (REDCELL_L1_MODEL) gets its own result files, never overwriting the originals.
+L1_TAG = "__l1-retrained" if os.getenv("REDCELL_L1_MODEL") else ""
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=None, help="qwen2.5:7b (default) or claude-haiku-5-5")
@@ -83,7 +86,7 @@ def main() -> None:
     print(f"cost: {c['model_calls']} model calls, {c['input_tokens']:,} input + {c['output_tokens']:,} "
           f"output tokens = ${c['usd'] if c['usd'] is not None else 'unknown'}")
 
-    out = os.path.join(ROOT, "dashboard", "benign", slug(f"{target}__{args.scenario}") + ".json")
+    out = os.path.join(ROOT, "dashboard", "benign", slug(f"{target}__{args.scenario}{L1_TAG}") + ".json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as f:
         json.dump(result, f, indent=2)

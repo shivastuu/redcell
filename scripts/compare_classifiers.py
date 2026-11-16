@@ -21,6 +21,7 @@ for pkg in ("redcell-core", "redcell-verifiers", "redcell-target", "redcell-atta
 
 from redcell_attackers.scorecard import wilson_ci                         # noqa: E402
 from redcell_attackers.specs import AttackSpec, benign_goals, build_catalog  # noqa: E402
+from redcell_attackers.variants import lang_set, split_set                  # noqa: E402
 from redcell_target import guards                                         # noqa: E402
 from redcell_target.scenario_tools import _APPOINTMENTS, _INBOX, _LABS     # noqa: E402
 from redcell_target.seed import _MEMOS                                     # noqa: E402
@@ -58,8 +59,12 @@ def texts() -> dict[str, list[str]]:
     benign = {g.text for s in SCENARIOS for g in benign_goals(s)}
     benign |= {m for m in _MEMOS if m} | {a["message"] for a in _APPOINTMENTS} | {_LABS["summary"]}
     benign |= {e[k] for e in _INBOX for k in ("subject", "body")}
-    return {WON: sorted(won), "all adaptive payloads": sorted(adaptive),
+    sets = {WON: sorted(won), "all adaptive payloads": sorted(adaptive),
             "static catalog": sorted(static), "benign texts": sorted(benign)}
+    sets["split attacks, whole (control)"] = [p.payload for s in SCENARIOS for v, p in split_set(s) if v == "whole"]
+    for lang in ("en", "hi", "hinglish", "invisible"):
+        sets[f"language: {lang}"] = [p.payload for s in SCENARIOS for v, p in lang_set(s) if v == lang]
+    return sets
 
 
 def rate(hits: list[bool]) -> dict:
@@ -82,6 +87,15 @@ def main() -> None:
         print(f"{name:<50} {cell(row['l1']):>12} {cell(row['pg2']):>12} {cell(row['either']):>12}")
         if name == WON:
             report["won"] = [{"payload": t[:400], "l1": a, "pg2": b} for t, a, b in zip(items, l1, p)]
+    # Split attacks: each half sits in its own field, so the attack is caught if EITHER half is flagged.
+    pairs = [p.parts for s in SCENARIOS for v, p in split_set(s) if v == "split"]
+    l1 = [guards.is_injection(h) or guards.is_injection(t) for h, t in pairs]
+    p = [pg2(h) or pg2(t) for h, t in pairs]
+    name = "split attacks, either half flagged"
+    row = {"l1": rate(l1), "pg2": rate(p), "either": rate([a or b for a, b in zip(l1, p)]),
+           "both": rate([a and b for a, b in zip(l1, p)])}
+    report["sets"][name] = row
+    print(f"{name:<50} {cell(row['l1']):>12} {cell(row['pg2']):>12} {cell(row['either']):>12}")
     out = os.path.join(ROOT, "dashboard", "classifiers.json")
     with open(out, "w") as f:
         json.dump(report, f, indent=2)

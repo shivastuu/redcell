@@ -39,6 +39,10 @@ def tool_list(scenario: str) -> str:
                      for f in fns)
 
 
+# A retrained L1 (REDCELL_L1_MODEL) gets its own result files, never overwriting the originals.
+L1_TAG = "__l1-retrained" if os.getenv("REDCELL_L1_MODEL") else ""
+L1_LABEL = " (retrained L1)" if L1_TAG else ""
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", default="qwen2.5:7b")
@@ -54,7 +58,7 @@ def main() -> None:
     if args.max_usd is not None:
         live_agent.MAX_USD = args.max_usd
     live_agent.PROMPT_SECRET = not args.no_prompt_secret
-    label = args.defense + (" + no secret in prompt" if args.no_prompt_secret else "")
+    label = args.defense + (" + no secret in prompt" if args.no_prompt_secret else "") + L1_LABEL
 
     defense = DefenseConfig.full() if args.defense == "full" else DefenseConfig.baseline()
     goals = build_catalog(1, args.scenario)                  # one seed per goal; the attacker writes the rest
@@ -104,7 +108,7 @@ def main() -> None:
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
     }
     out = os.path.join(ROOT, "dashboard", "adaptive",
-                       slug(f"{target}__{args.scenario}__{args.defense}{'__nosecret' if args.no_prompt_secret else ''}__by_{args.attacker}") + ".json")
+                       slug(f"{target}__{args.scenario}__{args.defense}{'__nosecret' if args.no_prompt_secret else ''}{L1_TAG}__by_{args.attacker}") + ".json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w") as f:
         json.dump(report, f, indent=2)

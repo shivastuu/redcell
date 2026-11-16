@@ -28,3 +28,4 @@ dashboard/*.tmp
 .venv-agentdojo/
 dashboard/agentdojo/runs/
 apps/dashboard/out/
+models/

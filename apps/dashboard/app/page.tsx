@@ -74,7 +74,8 @@ function Section({ c }: { c: Card }) {
 }
 
 export default function Page() {
-  const { cards, adaptive, agentdojo } = loadAll();
+  const { cards, adaptive, agentdojo, variants, retrain } = loadAll();
+  const kn = (x?: { k: number; n: number; rate: number }) => (x ? `${x.k}/${x.n} (${pct(x.rate)})` : "-");
   return (
     <main className="wrap">
       <h1><span className="dot" />RedCell Leaderboard</h1>
@@ -140,6 +141,41 @@ export default function Page() {
                 <td className="tnum r">{r.targeted_asr.count}/{r.targeted_asr.total} ({pct(r.targeted_asr.rate)})</td>
                 <td className="tnum">{usd(r.usd ?? 0)}{r.complete === false ? " · partial" : ""}</td>
               </tr>
+            ))}
+          </tbody></table></div>
+        </>
+      )}
+
+      {variants.length > 0 && (
+        <>
+          <h2>Trickier attacks, each next to its control</h2>
+          <div className="note">split: the instruction cut across two fields of one record. hi / hinglish: the same goal
+            in Hindi or Hinglish. invisible: hidden in Unicode tag characters. One shot each (scripts/run_variants.py).</div>
+          <div className="scroll"><table><tbody>
+            <tr><th className="l">target</th><th className="l">set</th><th className="l">variant</th>
+              <th>breached, no guards</th><th>breached, all guards</th></tr>
+            {variants.flatMap((r) =>
+              [...new Set(Object.keys(r.summary).map((k) => k.split("/")[0]))].map((v) => (
+                <tr key={`${r.target}-${r.set}-${v}`}>
+                  <td className="cat">{r.target}</td><td>{r.set}</td><td>{v}</td>
+                  <td className="tnum r">{kn(r.summary[`${v}/none`])}</td>
+                  <td className="tnum t">{kn(r.summary[`${v}/full`])}{r.complete ? "" : " · partial"}</td>
+                </tr>
+              )))}
+          </tbody></table></div>
+        </>
+      )}
+
+      {retrain && (
+        <>
+          <h2>L1 retrained on the attacks that beat it</h2>
+          <div className="note">Fine-tuned on other runs&rsquo; attacker payloads and generated clean text; every set
+            below was held out of training (scripts/train_l1.py). Share flagged as an injection.</div>
+          <div className="scroll"><table><tbody>
+            <tr><th className="l">texts</th><th>L1 before</th><th>L1 retrained</th></tr>
+            {Object.keys(retrain.before).map((k) => (
+              <tr key={k}><td>{k}</td><td className="tnum">{kn(retrain.before[k])}</td>
+                <td className="tnum">{kn(retrain.after[k])}</td></tr>
             ))}
           </tbody></table></div>
         </>
